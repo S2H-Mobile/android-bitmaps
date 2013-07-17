@@ -23,29 +23,27 @@ import android.os.Environment;
 
 public final class ExternalStorageHandler {
 
-	// cache the file handler
+	/** Caches the file handler. */
 	private static File sFile = null;
 
 	private ExternalStorageHandler() {
 	}
 
-	public static boolean deleteImageFile(String name) {
-		boolean isDeleted = false;
+	public static boolean deleteImageFile(final String fileName) {
 		try {
-			isDeleted = ExternalStorageHandler.getImageFile(name).delete();
-		} catch (IOException e) {
-			handleException(e);
+			return ExternalStorageHandler.getImageFile(fileName).delete();
+		} catch (final IOException e) {
+			return false;
 		}
-		return isDeleted;
 	}
 
-	public static File getImageFile(String name) throws IOException {
+	public static File getImageFile(final String fileName) throws IOException {
 		if (sFile == null) {
 			if (isExternalStorageWritable()) {
 				final File path = Environment
 						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 				path.mkdirs();
-				sFile = new File(path, name);
+				sFile = new File(path, fileName);
 			} else {
 				throw new IOException(
 						"Can't create path to external storage directory.");
@@ -54,13 +52,8 @@ public final class ExternalStorageHandler {
 		return sFile;
 	}
 
-	private static void handleException(IOException e) {
-		android.util.Log.e("ImageFileHandler",
-				"IOException occured while handling file.", e);
-	}
-
 	private static boolean isExternalStorageWritable() {
-		final String state = Environment.getExternalStorageState();
-		return Environment.MEDIA_MOUNTED.equals(state);
+		final String currentState = Environment.getExternalStorageState();
+		return Environment.MEDIA_MOUNTED.equals(currentState);
 	}
 }

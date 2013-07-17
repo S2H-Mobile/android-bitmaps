@@ -5,27 +5,35 @@ import java.lang.ref.WeakReference;
 import android.graphics.Bitmap;
 import android.widget.ImageView;
 
+/**
+ * Base class for bitmap tasks. Holds the callback and a weak reference to the
+ * image view.
+ * 
+ * @author Stephan Hoehne
+ * 
+ */
 abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 
 	protected final WeakReference<ImageView> mViewReference;
 
 	private final OnBitmapRenderedListener mCallback;
 
-	protected BitmapBaseTask(OnBitmapRenderedListener listener,
-			ImageView imageView) {
+	protected BitmapBaseTask(final OnBitmapRenderedListener listener,
+			final ImageView imageView) {
 		mCallback = listener;
 		mViewReference = new WeakReference<ImageView>(imageView);
 	}
 
 	/**
-	 * May return a null bitmap, in order for listeners to update their UI
-	 * accordingly, e.g. with error messages.
+	 * Returns the scaled bitmap to the caller. May return null, in order for
+	 * listeners to update their UI accordingly, e.g. with error messages.
 	 */
 	@Override
 	protected void onPostExecute(Bitmap bitmap) {
 		if (super.isCancelled()) {
 			bitmap = null;
 		}
+
 		if (mViewReference != null && mCallback != null) {
 			final ImageView imageView = mViewReference.get();
 			if (imageView != null) {
@@ -35,20 +43,20 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 	}
 
 	/**
-	 * Determines the factor to scale down the source image. Compares the
+	 * Determines the factor the source image is scaled down by. Compares the
 	 * dimensions of source and target image and calculates the smallest ratio.
 	 * Determines the scale factor by calculating the power of two that is
 	 * closest to this ratio.
 	 * 
 	 * @param imageWidth
-	 *            width of original image
+	 *            - width of original image
 	 * @param imageHeight
-	 *            height of original image
+	 *            - height of original image
 	 * @param reqWidth
-	 *            requested width of target image
+	 *            - requested width of target image
 	 * @param reqHeight
-	 *            requested height of target image
-	 * @return the scale factor
+	 *            - requested height of target image
+	 * @return The scale factor, a power of two.
 	 */
 	protected static int calculateInSampleSize(final int imageHeight,
 			final int imageWidth, final int reqHeight, final int reqWidth) {
@@ -87,6 +95,11 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 			temp *= 2;
 		}
 		final int scaleFactor = temp / 2;
+
+		// TODO remove log statement in production
+		// android.util.Log.i("BitmapBaseTask", "scale factor is " +
+		// scaleFactor);
+
 		return scaleFactor;
 	}
 }

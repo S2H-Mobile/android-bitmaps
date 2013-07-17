@@ -53,8 +53,8 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 
 	private final String mUrl;
 
-	private BitmapFetchTask(String url, OnBitmapRenderedListener listener,
-			ImageView imageView) {
+	private BitmapFetchTask(final String url,
+			final OnBitmapRenderedListener listener, final ImageView imageView) {
 		super(listener, imageView);
 		mUrl = url;
 	}
@@ -64,7 +64,7 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 	 * the required image, in this order.
 	 */
 	@Override
-	protected Bitmap doInBackground(Integer... params) {
+	protected Bitmap doInBackground(final Integer... params) {
 
 		// evaluate the parameters
 		final int targetWidth = params[0];
@@ -81,8 +81,10 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 	 * Executes a {@link BitmapFetchTask} to render a bitmap from the given
 	 * image url.
 	 * 
-	 * @param fileName
+	 * @param url
 	 *            - the url of the image file, for example a jpeg
+	 * @param listener
+	 *            - for the callback
 	 * @param imageView
 	 *            - the {@link ImageView} displaying the target bitmap
 	 * @param targetWidth
@@ -90,8 +92,8 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 	 * @param targetHeight
 	 *            - the height of the target bitmap
 	 */
-	public static void renderBitmapFromUrl(String url,
-			OnBitmapRenderedListener listener, ImageView imageView,
+	public static void renderBitmapFromUrl(final String url,
+			final OnBitmapRenderedListener listener, final ImageView imageView,
 			final int targetWidth, final int targetHeight) {
 
 		// instantiate the task
@@ -103,7 +105,7 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 		task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, params);
 	}
 
-	private static Bitmap decodeBitmapFromByteArray(byte[] data,
+	private static Bitmap decodeBitmapFromByteArray(final byte[] data,
 			final int targetWidth, final int targetHeight) {
 		final BitmapFactory.Options options = new BitmapFactory.Options();
 
@@ -144,9 +146,9 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 		return client;
 	}
 
-	private static final byte[] getImageByteArray(String spec) {
+	private static final byte[] getImageByteArray(final String spec) {
 		final AndroidHttpClient client = getAndroidHttpClient();
-		InputStream in = null;
+		final InputStream in = null;
 		try {
 			final URI uri = new URI(spec);
 			final HttpGet get = new HttpGet(uri);
@@ -155,19 +157,23 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 			final HttpResponse response = client.execute(get);
 			final int statusCode = response.getStatusLine().getStatusCode();
 			if (statusCode == HttpStatus.SC_OK) {
+
 				return IOUtils.toByteArray(response.getEntity().getContent());
 			} else {
-				final String message = response.getStatusLine()
-						.getReasonPhrase();
-				android.util.Log.w("BitmapFetchTask",
-						"Unable to get image from server. " + message);
+
+				// TODO remove log statement in production
+				// final String message = response.getStatusLine()
+				// .getReasonPhrase();
+				// android.util.Log.w("BitmapFetchTask",
+				// "Unable to get image from server. " + message);
+
 				return null;
 			}
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			return null;
-		} catch (ClientProtocolException e) {
+		} catch (final ClientProtocolException e) {
 			return null;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			return null;
 		} finally {
 			IOUtils.closeQuietly(in);
