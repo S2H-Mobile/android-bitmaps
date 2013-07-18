@@ -52,8 +52,8 @@ public abstract class AsyncTask<Params, Progress, Result> {
 		}
 	};
 
-	private static final BlockingQueue<Runnable> sPoolWorkQueue = new LinkedBlockingQueue<Runnable>(
-			10);
+	private static final BlockingQueue<Runnable> sPoolWorkQueue =
+			new LinkedBlockingQueue<Runnable>(10);
 
 	/**
 	 * An {@link Executor} that can be used to execute tasks in parallel.
@@ -67,8 +67,10 @@ public abstract class AsyncTask<Params, Progress, Result> {
 	 * An {@link Executor} that executes tasks one at a time in serial order.
 	 * This serialization is global to a particular process.
 	 */
-	public static final Executor SERIAL_EXECUTOR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? new SerialExecutor()
-			: Executors.newSingleThreadExecutor(sThreadFactory);
+	public static final Executor SERIAL_EXECUTOR =
+			Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ?
+					new SerialExecutor() :
+							Executors.newSingleThreadExecutor(sThreadFactory);
 
 	public static final Executor DUAL_THREAD_EXECUTOR = Executors
 			.newFixedThreadPool(2, sThreadFactory);
@@ -478,14 +480,16 @@ public abstract class AsyncTask<Params, Progress, Result> {
 	public final AsyncTask<Params, Progress, Result> executeOnExecutor(
 			Executor exec, Params... params) {
 		if (mStatus != Status.PENDING) {
-			switch (mStatus) {
+			switch (mStatus) {			
 			case RUNNING:
 				throw new IllegalStateException("Cannot execute task:"
-						+ " the task is already running.");
+						+ " the task is already running.");				
 			case FINISHED:
 				throw new IllegalStateException("Cannot execute task:"
 						+ " the task has already been executed "
 						+ "(a task can be executed only once)");
+			default:
+				break;				
 			}
 		}
 

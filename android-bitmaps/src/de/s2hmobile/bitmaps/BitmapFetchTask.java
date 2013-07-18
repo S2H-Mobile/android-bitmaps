@@ -162,11 +162,10 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 			} else {
 
 				// TODO remove log statement in production
-				// final String message = response.getStatusLine()
-				// .getReasonPhrase();
-				// android.util.Log.w("BitmapFetchTask",
-				// "Unable to get image from server. " + message);
-
+				final String message = response.getStatusLine()
+						.getReasonPhrase();
+				android.util.Log.w("BitmapFetchTask",
+						"Unable to connect to server. " + message);
 				return null;
 			}
 		} catch (final URISyntaxException e) {

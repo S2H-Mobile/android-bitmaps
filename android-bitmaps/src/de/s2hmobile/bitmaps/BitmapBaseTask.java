@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2013, S2H Mobile
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.s2hmobile.bitmaps;
 
 import java.lang.ref.WeakReference;
@@ -6,8 +22,8 @@ import android.graphics.Bitmap;
 import android.widget.ImageView;
 
 /**
- * Base class for bitmap tasks. Holds the callback and a weak reference to the
- * image view.
+ * Base class for bitmap tasks. Holds the callback to the listener and a weak
+ * reference to the image view.
  * 
  * @author Stephan Hoehne
  * 
@@ -61,7 +77,7 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 	protected static int calculateInSampleSize(final int imageHeight,
 			final int imageWidth, final int reqHeight, final int reqWidth) {
 
-		// init the size ratio between source and target
+		// initialize the size ratio between source and target
 		int ratio = 1;
 
 		/*
@@ -97,8 +113,8 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 		final int scaleFactor = temp / 2;
 
 		// TODO remove log statement in production
-		// android.util.Log.i("BitmapBaseTask", "scale factor is " +
-		// scaleFactor);
+		android.util.Log.i("BitmapBaseTask", "The scale factor is "
+				+ scaleFactor + ".");
 
 		return scaleFactor;
 	}
