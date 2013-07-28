@@ -26,14 +26,14 @@ public final class BitmapFileTask extends BitmapBaseTask {
 
 	private final String mPath;
 
-	private BitmapFileTask(String path, OnBitmapRenderedListener listener,
-			ImageView imageView) {
+	private BitmapFileTask(final String path,
+			final OnBitmapRenderedListener listener, final ImageView imageView) {
 		super(listener, imageView);
 		mPath = path;
 	}
 
 	@Override
-	protected Bitmap doInBackground(Integer... params) {
+	protected Bitmap doInBackground(final Integer... params) {
 
 		// evaluate the parameters
 		final int targetWidth = params[0];
@@ -55,8 +55,8 @@ public final class BitmapFileTask extends BitmapBaseTask {
 	 * @param targetHeight
 	 *            - the height of the target bitmap
 	 */
-	public static void renderBitmapFromFile(File file,
-			OnBitmapRenderedListener listener, ImageView imageView,
+	public static void renderBitmapFromFile(final File file,
+			final OnBitmapRenderedListener listener, final ImageView imageView,
 			final int targetWidth, final int targetHeight) {
 
 		// check for file
@@ -89,8 +89,8 @@ public final class BitmapFileTask extends BitmapBaseTask {
 
 		// decode the image file into a bitmap
 		options.inJustDecodeBounds = false;
-		options.inSampleSize = calculateInSampleSize(imageHeight, imageWidth,
-				targetHeight, targetWidth);
+		options.inSampleSize = BitmapBaseTask.calculateInSampleSize(
+				imageHeight, imageWidth, targetHeight, targetWidth);
 		options.inPurgeable = true;
 		return BitmapFactory.decodeFile(path, options);
 	}
