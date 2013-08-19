@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package de.s2hmobile.bitmaps;
+package de.s2hmobile.bitmaps.framework;
 
 import java.util.ArrayDeque;
 import java.util.concurrent.BlockingQueue;

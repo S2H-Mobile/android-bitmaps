@@ -16,98 +16,77 @@
 
 package de.s2hmobile.bitmaps;
 
-import java.lang.ref.WeakReference;
-
+import de.s2hmobile.bitmaps.framework.AsyncTask;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.v4.util.LruCache;
 import android.widget.ImageView;
 
 public class BitmapResourceTask extends BitmapBaseTask {
 
-	private final WeakReference<LruCache<String, Bitmap>> mCacheReference;
+	private final int mResId;
 	private final Resources mResources;
 
-	public BitmapResourceTask(final Resources resources,
-			final ImageView imageView, final LruCache<String, Bitmap> cache) {
-		super(null, imageView);
+	public BitmapResourceTask(final OnBitmapRenderedListener callback,
+			final ImageView imageView, final Resources resources,
+			final int resId) {
+		super(callback, imageView);
 		mResources = resources;
-		mCacheReference = new WeakReference<LruCache<String, Bitmap>>(cache);
+		mResId = resId;
+	}
+
+	@Override
+	protected String createKey(final Bitmap bitmap) {
+
+		final int width = bitmap.getWidth();
+		final int height = bitmap.getHeight();
+
+		final String result = new StringBuilder().append(mResId).append("_")
+				.append(width).append("_").append(height).toString();
+
+		// TODO remove log statement
+		android.util.Log.i("BitmapResourceTask", "key is " + result);
+
+		return result;
 	}
 
 	@Override
 	protected Bitmap doInBackground(final Integer... params) {
 
 		// evaluate the parameters
-		final int resId = params[0];
-		final int targetWidth = params[1];
-		final int targetHeight = params[2];
+		final int targetWidth = params[0];
+		final int targetHeight = params[1];
 
-		final Bitmap bitmap = decodeBitmapFromResource(mResources, resId,
-				targetWidth, targetHeight);
-
-		if (mCacheReference != null) {
-
-			// we use the image resource id as the key for the cache entry
-			BitmapResourceTask.addBitmapToCache(mCacheReference.get(),
-					String.valueOf(resId), bitmap);
-		}
-		return bitmap;
+		return decodeBitmapFromResource(mResources, mResId, targetWidth,
+				targetHeight);
 	}
 
-	@Override
-	protected void onPostExecute(final Bitmap bitmap) {
-		if (mViewReference != null && bitmap != null) {
-			final ImageView imageView = mViewReference.get();
-			if (imageView != null) {
-				imageView.setImageBitmap(bitmap);
-			}
-		}
-	}
-
-	public static void renderBitmapFromResource(final int resId,
-			final Resources resources, final ImageView imageView,
-			final LruCache<String, Bitmap> cache, final int targetWidth,
+	public static void renderBitmapFromResource(final Resources resources,
+			final int resId, final OnBitmapRenderedListener callback,
+			final ImageView imageView, final int targetWidth,
 			final int targetHeight) {
 
 		// create the task
-		final BitmapResourceTask task = new BitmapResourceTask(resources,
-				imageView, cache);
+		final BitmapResourceTask task = new BitmapResourceTask(callback,
+				imageView, resources, resId);
 
 		// start the task with parameters
-		final Integer[] params = { resId, targetWidth, targetHeight };
+		final Integer[] params = { targetWidth, targetHeight };
 		task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, params);
-	}
-
-	/**
-	 * Puts the bitmap in the cache.
-	 * 
-	 * @param cache
-	 * @param key
-	 * @param bitmap
-	 */
-	private static void addBitmapToCache(final LruCache<String, Bitmap> cache,
-			final String key, final Bitmap bitmap) {
-		if (cache != null) {
-			if (cache.get(key) == null) {
-				cache.put(key, bitmap);
-			}
-		}
 	}
 
 	/**
 	 * Decodes a bitmap from a resource image file.
 	 * 
 	 * @param res
-	 *            the package resources
+	 *            - the package resources
 	 * @param resId
-	 *            the resource Id of the image file
+	 *            - the resource Id of the image file
 	 * @param targetWidth
-	 *            the width of the target bitmap
+	 *            - the width of the target bitmap
 	 * @param targetHeight
-	 *            the height of the target bitmap
-	 * @return the decoded bitmap
+	 *            - the height of the target bitmap
+	 * @return The decoded bitmap, scaled to the target dimensions.
 	 */
 	private static Bitmap decodeBitmapFromResource(final Resources res,
 			final int resId, final int targetWidth, final int targetHeight) {
@@ -122,7 +101,16 @@ public class BitmapResourceTask extends BitmapBaseTask {
 
 		// raw height and width of image
 		final int imageWidth = options.outWidth;
+
+		// TODO remove log statement
+		android.util.Log.i("BimapResourceTask.calculateInSampleSize()",
+				"raw width = " + imageWidth + " px");
+
 		final int imageHeight = options.outHeight;
+
+		// TODO remove log statement
+		android.util.Log.i("BimapResourceTask.calculateInSampleSize()",
+				"raw height = " + imageHeight + " px");
 
 		// decode the image file into a bitmap
 		options.inJustDecodeBounds = false;

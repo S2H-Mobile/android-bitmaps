@@ -18,6 +18,8 @@ package de.s2hmobile.bitmaps;
 
 import java.lang.ref.WeakReference;
 
+import de.s2hmobile.bitmaps.framework.AsyncTask;
+
 import android.graphics.Bitmap;
 import android.widget.ImageView;
 
@@ -25,23 +27,37 @@ import android.widget.ImageView;
  * Base class for bitmap tasks. Holds the callback to the listener and a weak
  * reference to the image view.
  * 
+ * <p>
+ * Derived classes store the data needed to access the image resource, for
+ * example a url, a file system path or a resource Id.
+ * 
  * @author Stephan Hoehne
  * 
  */
 abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 
-	protected final WeakReference<ImageView> mViewReference;
-
 	private final OnBitmapRenderedListener mCallback;
 
-	protected BitmapBaseTask(final OnBitmapRenderedListener listener,
+	private final WeakReference<ImageView> mViewReference;
+
+	/**
+	 * Here we construct the weak references to the image view and the memory
+	 * cache. We use them in {@link BitmapBaseTask#onPostExecute(Bitmap)}.
+	 * 
+	 * @param callback
+	 * @param imageView
+	 */
+	protected BitmapBaseTask(final OnBitmapRenderedListener callback,
 			final ImageView imageView) {
-		mCallback = listener;
+		mCallback = callback;
 		mViewReference = new WeakReference<ImageView>(imageView);
 	}
 
+	protected abstract String createKey(final Bitmap bitmap);
+
 	/**
-	 * Returns the scaled bitmap to the caller. May return null, in order for
+	 * Returns the rescaled bitmap to the caller. The bitmap is tagged with a
+	 * key string, as defined by derived classes. May return null, in order for
 	 * listeners to update their UI accordingly, e.g. with error messages.
 	 */
 	@Override
@@ -53,7 +69,9 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 		if (mViewReference != null && mCallback != null) {
 			final ImageView imageView = mViewReference.get();
 			if (imageView != null) {
-				mCallback.onBitmapRendered(imageView, bitmap);
+				final String key = createKey(bitmap);
+				final TaggedBitmap result = new TaggedBitmap(bitmap, key);
+				mCallback.onBitmapRendered(imageView, result);
 			}
 		}
 	}
@@ -64,15 +82,16 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 	 * Determines the scale factor by calculating the power of two that is
 	 * closest to this ratio.
 	 * 
-	 * @param imageWidth
-	 *            - width of original image
 	 * @param imageHeight
 	 *            - height of original image
-	 * @param reqWidth
-	 *            - requested width of target image
+	 * @param imageWidth
+	 *            - width of original image
 	 * @param reqHeight
 	 *            - requested height of target image
-	 * @return The scale factor, a power of two.
+	 * @param reqWidth
+	 *            - requested width of target image
+	 * 
+	 * @return The scale factor, which is a power of two.
 	 */
 	protected static int calculateInSampleSize(final int imageHeight,
 			final int imageWidth, final int reqHeight, final int reqWidth) {
@@ -100,13 +119,16 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 			 * equal to the requested ones.
 			 */
 			ratio = Math.min(heightRatio, widthRatio);
+
+			// TODO remove log statement in production
+			android.util.Log.i("BitmapBaseTask", "ratio = " + ratio);
 		}
 
 		/*
 		 * Determine the power of two that is closest to and smaller than the
 		 * scale factor.
 		 */
-		int temp = 2;
+		int temp = 4;
 		while (temp <= ratio) {
 			temp *= 2;
 		}
