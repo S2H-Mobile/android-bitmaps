@@ -2,6 +2,7 @@ package de.s2hmobile.bitmaps;
 
 import android.annotation.TargetApi;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.support.v4.util.LruCache;
 
@@ -31,17 +32,33 @@ public class FractionalMemCache {
 
 		mLruCache = new LruCache<String, Bitmap>(cacheSize) {
 
-			@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+			/**
+			 * Measure item size in kilobytes rather than units which is more
+			 * practical for a bitmap cache.
+			 */
 			@Override
 			protected int sizeOf(final String key, final Bitmap bitmap) {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-					return bitmap.getByteCount() / 1024;
-				} else {
-					return bitmap.getRowBytes() * bitmap.getHeight() / 1024;
-				}
+				final int bitmapSize = FractionalMemCache.getBitmapSize(bitmap) / 1024;
+				return bitmapSize == 0 ? 1 : bitmapSize;
 			}
 
 		};
+	}
+
+	/**
+	 * Get the size in bytes of a bitmap.
+	 * 
+	 * @param bitmap
+	 *            - the bitmap to measure
+	 * @return The size of the bitmap in bytes.
+	 */
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+	public static int getBitmapSize(final Bitmap bitmap) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+			return bitmap.getByteCount();
+		} else {
+			return bitmap.getRowBytes() * bitmap.getHeight();
+		}
 	}
 
 	public void addTaggedBitmapToCache(final TaggedBitmap taggedBitmap) {

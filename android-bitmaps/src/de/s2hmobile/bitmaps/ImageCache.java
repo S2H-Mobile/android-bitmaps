@@ -70,7 +70,6 @@ public class ImageCache {
 
 		public boolean diskCacheEnabled = DEFAULT_DISK_CACHE_ENABLED;
 		public int diskCacheSize = DEFAULT_DISK_CACHE_SIZE;
-		public boolean initDiskCacheOnCreate = DEFAULT_INIT_DISK_CACHE_ON_CREATE;
 
 		/*
 		 * Parameters for memory cache.
@@ -172,8 +171,6 @@ public class ImageCache {
 	// Default disk cache size in bytes
 	private static final int DEFAULT_DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
 
-	private static final boolean DEFAULT_INIT_DISK_CACHE_ON_CREATE = false;
-
 	// Constants to easily toggle various caches
 	private static final boolean DEFAULT_MEM_CACHE_ENABLED = true;
 
@@ -181,29 +178,91 @@ public class ImageCache {
 	private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 5; // 5MB
 
 	private static final int DISK_CACHE_INDEX = 0;
+
+	// TODO remove log statements
 	private static final String TAG = "ImageCache";
 
 	private ImageCacheParams mCacheParams = null;
+
+	/*
+	 * final empty object for synchronizing
+	 */
 	private final Object mDiskCacheLock = new Object();
+
 	private boolean mDiskCacheStarting = true;
 
-	private DiskLruCache mDiskLruCache;
+	private DiskLruCache mDiskLruCache = null;
 
-	private LruCache<String, BitmapDrawable> mMemoryCache;
+	private LruCache<String, BitmapDrawable> mMemoryCache = null;
 
-	private HashSet<SoftReference<Bitmap>> mReusableBitmaps;
+	private HashSet<SoftReference<Bitmap>> mReusableBitmaps = null;
 
 	/**
-	 * Create a new ImageCache object using the specified parameters. This
-	 * should not be called directly by other classes, instead use
+	 * Create a new ImageCache object using the specified parameters. Initialize
+	 * the memory LruCache, but NOT the disk cache. This should not be called
+	 * directly by other classes, instead use
 	 * {@link ImageCache#getInstance(FragmentManager, ImageCacheParams)} to
 	 * fetch an ImageCache instance.
 	 * 
 	 * @param cacheParams
-	 *            The cache parameters to use to initialize the cache
+	 *            - the cache parameters to initialize the cache
 	 */
 	private ImageCache(final ImageCacheParams cacheParams) {
-		init(cacheParams);
+		mCacheParams = cacheParams;
+
+		// Set up memory cache
+		if (mCacheParams.memoryCacheEnabled) {
+			if (BuildConfig.DEBUG) {
+				Log.d(TAG, "Memory cache created (size = "
+						+ mCacheParams.memCacheSize + ")");
+			}
+
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				mReusableBitmaps = new HashSet<SoftReference<Bitmap>>();
+			}
+
+			mMemoryCache = new LruCache<String, BitmapDrawable>(
+					mCacheParams.memCacheSize) {
+
+				/**
+				 * Notify the removed entry that is no longer being cached
+				 */
+				@Override
+				protected void entryRemoved(final boolean evicted,
+						final String key, final BitmapDrawable oldValue,
+						final BitmapDrawable newValue) {
+					if (RecyclingBitmapDrawable.class.isInstance(oldValue)) {
+						// The removed entry is a recycling drawable, so notify
+						// it
+						// that it has been removed from the memory cache
+						((RecyclingBitmapDrawable) oldValue).setIsCached(false);
+					} else {
+						// The removed entry is a standard BitmapDrawable
+
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+							// We're running on Honeycomb or later, so add the
+							// bitmap
+							// to a SoftRefrence set for possible use with
+							// inBitmap later
+							mReusableBitmaps.add(new SoftReference<Bitmap>(
+									oldValue.getBitmap()));
+						}
+					}
+				}
+
+				/**
+				 * Measure item size in kilobytes rather than units which is
+				 * more practical for a bitmap cache.
+				 */
+				@Override
+				protected int sizeOf(final String key,
+						final BitmapDrawable value) {
+					final int bitmapSize = ImageCache.getBitmapSize(value) / 1024;
+					return bitmapSize == 0 ? 1 : bitmapSize;
+				}
+
+			};
+		}
 	}
 
 	/**
@@ -424,6 +483,7 @@ public class ImageCache {
 	 * call initDiskCache() to initialize it on a background thread.
 	 */
 	public void initDiskCache() {
+
 		// Set up disk cache
 		synchronized (mDiskCacheLock) {
 			if (mDiskLruCache == null || mDiskLruCache.isClosed()) {
@@ -488,92 +548,21 @@ public class ImageCache {
 	}
 
 	/**
-	 * Initialize the cache, providing all parameters.
-	 * 
-	 * @param cacheParams
-	 *            The cache parameters to initialize the cache
-	 */
-	private void init(final ImageCacheParams cacheParams) {
-		mCacheParams = cacheParams;
-
-		// Set up memory cache
-		if (mCacheParams.memoryCacheEnabled) {
-			if (BuildConfig.DEBUG) {
-				Log.d(TAG, "Memory cache created (size = "
-						+ mCacheParams.memCacheSize + ")");
-			}
-
-			// If we're running on Honeycomb or newer, then
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				mReusableBitmaps = new HashSet<SoftReference<Bitmap>>();
-			}
-
-			mMemoryCache = new LruCache<String, BitmapDrawable>(
-					mCacheParams.memCacheSize) {
-
-				/**
-				 * Notify the removed entry that is no longer being cached
-				 */
-				@Override
-				protected void entryRemoved(final boolean evicted,
-						final String key, final BitmapDrawable oldValue,
-						final BitmapDrawable newValue) {
-					if (RecyclingBitmapDrawable.class.isInstance(oldValue)) {
-						// The removed entry is a recycling drawable, so notify
-						// it
-						// that it has been removed from the memory cache
-						((RecyclingBitmapDrawable) oldValue).setIsCached(false);
-					} else {
-						// The removed entry is a standard BitmapDrawable
-
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-							// We're running on Honeycomb or later, so add the
-							// bitmap
-							// to a SoftRefrence set for possible use with
-							// inBitmap later
-							mReusableBitmaps.add(new SoftReference<Bitmap>(
-									oldValue.getBitmap()));
-						}
-					}
-				}
-
-				/**
-				 * Measure item size in kilobytes rather than units which is
-				 * more practical for a bitmap cache
-				 */
-				@Override
-				protected int sizeOf(final String key,
-						final BitmapDrawable value) {
-					final int bitmapSize = getBitmapSize(value) / 1024;
-					return bitmapSize == 0 ? 1 : bitmapSize;
-				}
-			};
-		}
-
-		// By default the disk cache is not initialized here as it should be
-		// initialized
-		// on a separate thread due to disk access.
-		if (cacheParams.initDiskCacheOnCreate) {
-			// Set up disk cache
-			initDiskCache();
-		}
-	}
-
-	/**
 	 * Get the size in bytes of a bitmap in a BitmapDrawable.
 	 * 
 	 * @param value
-	 * @return size in bytes
+	 *            - the bitmap drawable
+	 * @return The size of the bitmap in bytes.
 	 */
-	@TargetApi(12)
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 	public static int getBitmapSize(final BitmapDrawable value) {
 		final Bitmap bitmap = value.getBitmap();
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 			return bitmap.getByteCount();
+		} else {
+			return bitmap.getRowBytes() * bitmap.getHeight();
 		}
-		// Pre HC-MR1
-		return bitmap.getRowBytes() * bitmap.getHeight();
 	}
 
 	/**
