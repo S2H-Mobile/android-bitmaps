@@ -16,6 +16,7 @@
 
 package de.s2hmobile.bitmaps;
 
+import android.graphics.Bitmap;
 import android.widget.ImageView;
 
 /**
@@ -35,6 +36,5 @@ public interface OnBitmapRenderedListener {
 	 * @param taggedBitmap
 	 *            - the rescaled bitmap and its the key
 	 */
-	public void onBitmapRendered(final ImageView view,
-			final TaggedBitmap taggedBitmap);
+	public void onBitmapRendered(final ImageView view, final Bitmap bitmap);
 }

@@ -21,6 +21,7 @@ import java.lang.ref.WeakReference;
 import de.s2hmobile.bitmaps.framework.AsyncTask;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.widget.ImageView;
 
 /**
@@ -69,16 +70,25 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 		if (mViewReference != null && mCallback != null) {
 			final ImageView imageView = mViewReference.get();
 			if (imageView != null) {
-				final String key = createKey(bitmap);
-				final TaggedBitmap result = new TaggedBitmap(bitmap, key);
-				mCallback.onBitmapRendered(imageView, result);
+				// final String key = createKey(bitmap);
+				// final TaggedBitmap result = new TaggedBitmap(bitmap, key);
+				mCallback.onBitmapRendered(imageView, bitmap);
 			}
 		}
 	}
 
 	/**
-	 * Determines the factor the source image is scaled down by. Compares the
-	 * dimensions of source and target image and calculates the smallest ratio.
+	 * Determines the factor the source image is scaled down by. The resulting
+	 * sample size is to be used in a {@link BitmapFactory.Options} object when
+	 * decoding bitmaps with {@link BitmapFactory}.
+	 * 
+	 * Compares the dimensions of source and target image and calculates the
+	 * smallest ratio.
+	 * 
+	 * Calculates the smallest sample size that will result in the final decoded
+	 * bitmap having a width and height equal to or larger than the requested
+	 * width and height.
+	 * 
 	 * Determines the scale factor by calculating the power of two that is
 	 * closest to this ratio.
 	 * 
@@ -91,7 +101,7 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 	 * @param reqWidth
 	 *            - requested width of target image
 	 * 
-	 * @return The scale factor, which is a power of two.
+	 * @return The scale factor as a power of two.
 	 */
 	protected static int calculateInSampleSize(final int imageHeight,
 			final int imageWidth, final int reqHeight, final int reqWidth) {
@@ -104,7 +114,7 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 		 * dividing by zero. Check if the original image is actually larger than
 		 * the target image.
 		 */
-		if (reqWidth != 0 && reqHeight != 0
+		if (reqWidth > 0 && reqHeight > 0
 				&& (imageHeight > reqHeight || imageWidth > reqWidth)) {
 
 			// calculate height and width ratios
@@ -124,20 +134,39 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 			android.util.Log.i("BitmapBaseTask", "ratio = " + ratio);
 		}
 
+		// This offers some additional logic in case the image has a strange
+		// aspect ratio. For example, a panorama may have a much larger
+		// width than height. In these cases the total pixels might still
+		// end up being too large to fit comfortably in memory, so we should
+		// be more aggressive with sample down the image (=larger
+		// inSampleSize).
+		final float totalPixels = imageWidth * imageHeight;
+
+		// Anything more than 2x the requested pixels we'll sample down
+		// further
+		final float totalRequestedPixelsCap = reqWidth * reqHeight * 2;
+
+		while (totalPixels / (ratio * ratio) > totalRequestedPixelsCap) {
+			ratio++;
+		}
+
+		// TODO remove log statement in production
+		android.util.Log.i("BitmapBaseTask", "ratio = " + ratio);
+
 		/*
 		 * Determine the power of two that is closest to and smaller than the
 		 * scale factor.
 		 */
-		int temp = 4;
+		int temp = 2;
 		while (temp <= ratio) {
 			temp *= 2;
 		}
-		final int scaleFactor = temp / 2;
+		final int inSampleSize = temp / 2;
 
 		// TODO remove log statement in production
 		android.util.Log.i("BitmapBaseTask", "The scale factor is "
-				+ scaleFactor + ".");
+				+ inSampleSize + ".");
 
-		return scaleFactor;
+		return inSampleSize;
 	}
 }
