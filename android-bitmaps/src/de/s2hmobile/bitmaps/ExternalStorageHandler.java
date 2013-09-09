@@ -75,19 +75,25 @@ public final class ExternalStorageHandler {
 	 *            - a unique directory name to append to the cache dir
 	 * @return The cache directory.
 	 */
-	static File getDiskCacheDir(final Context context, final String uniqueName) {
+	static File getDiskCacheDir(final Context context, final String uniqueName)
+			throws IOException {
 
 		/*
 		 * Check if media is mounted or storage is built-in. If so, try and use
 		 * external cache directory. Otherwise use internal cache directory.
 		 */
-		try {
-			final String cachePath = isExternalStorageWritable() ? getExternalCacheDir(
-					context).getPath()
-					: context.getCacheDir().getPath();
-			return new File(cachePath + File.separator + uniqueName);
-		} catch (final IOException e) {
-			return null;
+		final File cacheDir = isExternalStorageWritable() ? context
+				.getExternalCacheDir() : context.getCacheDir();
+		if (cacheDir != null) {
+			final String path = cacheDir.getPath() + File.separator
+					+ uniqueName;
+
+			// TODO remove log statement
+			android.util.Log.i("Ext", "path = " + path);
+
+			return new File(path);
+		} else {
+			throw new IOException("Path to cache directory is null.");
 		}
 	}
 
