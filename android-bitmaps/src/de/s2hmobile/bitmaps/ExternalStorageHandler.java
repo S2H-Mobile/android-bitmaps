@@ -75,8 +75,7 @@ public final class ExternalStorageHandler {
 	 *            - a unique directory name to append to the cache dir
 	 * @return The cache directory.
 	 */
-	static File getDiskCacheDir(final Context context, final String uniqueName)
-			throws IOException {
+	static File getDiskCacheDir(final Context context, final String uniqueName) {
 
 		/*
 		 * Check if media is mounted or storage is built-in. If so, try and use
@@ -93,7 +92,7 @@ public final class ExternalStorageHandler {
 
 			return new File(path);
 		} else {
-			throw new IOException("Path to cache directory is null.");
+			return null;
 		}
 	}
 

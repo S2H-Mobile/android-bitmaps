@@ -99,13 +99,9 @@ public class ImageCache {
 		public ImageCacheParams(final Context context,
 				final String diskCacheDirectoryName) {
 
-			try {
-				diskCacheDir = ExternalStorageHandler.getDiskCacheDir(context,
-						diskCacheDirectoryName);
-			} catch (final IOException e) {
-				android.util.Log.e("ImageCache", "Can't create diskCacheDir.",
-						e);
-			}
+			diskCacheDir = ExternalStorageHandler.getDiskCacheDir(context,
+					diskCacheDirectoryName);
+
 		}
 
 		/**
@@ -121,7 +117,7 @@ public class ImageCache {
 		 *            - fraction of available app memory to use to size memory
 		 *            cache
 		 */
-		public void setMemCacheSize(final int fraction) {
+		public void setMemCacheFraction(final int fraction) {
 			int memoryFraction = DEFAULT_MEMORY_FRACTION;
 			if (fraction > DEFAULT_MEMORY_FRACTION) {
 				memoryFraction = fraction;
@@ -294,15 +290,12 @@ public class ImageCache {
 			return;
 		}
 
-		final int height = value.getIntrinsicHeight();
-		final int width = value.getIntrinsicWidth();
+		// final int height = value.getIntrinsicHeight();
+		// final int width = value.getIntrinsicWidth();
 
-		final String key = String.valueOf(resId) + "_" + String.valueOf(height)
-				+ "_" + String.valueOf(width);
-
-		if (BuildConfig.DEBUG) {
-			android.util.Log.i("ImageCache", key);
-		}
+		final String key = String.valueOf(resId);
+		// + "_" + String.valueOf(height)
+		// + "_" + String.valueOf(width);
 
 		// Add to memory cache
 		if (mMemoryCache != null) {
@@ -311,6 +304,12 @@ public class ImageCache {
 				// that it has been added into the memory cache
 				((RecyclingBitmapDrawable) value).setIsCached(true);
 			}
+
+			if (BuildConfig.DEBUG) {
+				android.util.Log.i("ImageCache", "Add " + key
+						+ " to memory cache.");
+			}
+
 			mMemoryCache.put(key, value);
 		}
 
@@ -326,6 +325,14 @@ public class ImageCache {
 						final DiskLruCache.Editor editor = mDiskLruCache
 								.edit(hashKey);
 						if (editor != null) {
+
+							if (BuildConfig.DEBUG) {
+								android.util.Log.i("ImageCache", "Add " + key
+										+ " to disk cache.");
+								android.util.Log.i("ImageCache", "Hash for "
+										+ key + " is " + hashKey);
+							}
+
 							out = editor.newOutputStream(DISK_CACHE_INDEX);
 							value.getBitmap().compress(
 									mCacheParams.compressFormat,
@@ -450,7 +457,7 @@ public class ImageCache {
 							.get(key);
 					if (snapshot != null) {
 						if (BuildConfig.DEBUG) {
-							Log.d(TAG, "Disk cache hit for " + resId);
+							Log.i(TAG, "Disk cache hit for " + resId);
 						}
 						inputStream = snapshot.getInputStream(DISK_CACHE_INDEX);
 						if (inputStream != null) {
@@ -497,7 +504,7 @@ public class ImageCache {
 		}
 
 		if (BuildConfig.DEBUG && memValue != null) {
-			Log.d(TAG, "Memory cache hit for image " + resId);
+			Log.i(TAG, "Memory cache hit for image " + resId);
 		}
 
 		return memValue;
@@ -524,7 +531,7 @@ public class ImageCache {
 							mDiskLruCache = DiskLruCache.open(diskCacheDir, 1,
 									1, mCacheParams.diskCacheSize);
 							if (BuildConfig.DEBUG) {
-								Log.d(TAG, "Disk cache initialized");
+								Log.i(TAG, "Disk cache initialized");
 							}
 						} catch (final IOException e) {
 							mCacheParams.diskCacheDir = null;
