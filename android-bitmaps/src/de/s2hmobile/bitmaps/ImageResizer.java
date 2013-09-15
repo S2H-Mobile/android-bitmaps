@@ -33,7 +33,6 @@ import android.util.Log;
  */
 public class ImageResizer extends ImageLoader {
 
-	// TODO maybe let dimensions be reset
 	protected final int mImageHeight;
 
 	protected final int mImageWidth;
@@ -144,7 +143,7 @@ public class ImageResizer extends ImageLoader {
 
 		// decode the image file into a bitmap
 		options.inJustDecodeBounds = false;
-		// FIXME options.inPurgeable = true;
+		options.inPurgeable = true;
 		return BitmapFactory.decodeFile(path, options);
 	}
 
@@ -194,7 +193,7 @@ public class ImageResizer extends ImageLoader {
 
 		// decode the image file into a bitmap
 		options.inJustDecodeBounds = false;
-		// FIXME options.inPurgeable = true;
+		options.inPurgeable = true;
 		return BitmapFactory.decodeResource(res, resId, options);
 	}
 
@@ -272,11 +271,10 @@ public class ImageResizer extends ImageLoader {
 		 * Determine the power of two that is closest to and smaller than the
 		 * scale factor.
 		 */
-		int temp = 2;
-		while (temp <= ratio) {
-			temp *= 2;
+		int inSampleSize = 2;
+		while (inSampleSize <= ratio) {
+			inSampleSize *= 2;
 		}
-		final int inSampleSize = temp / 2;
 
 		// TODO remove log statement in production
 		android.util.Log.i("ImageResizer", "The sample size is " + inSampleSize
