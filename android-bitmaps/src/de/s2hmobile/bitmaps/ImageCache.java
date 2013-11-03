@@ -46,7 +46,7 @@ import android.util.Log;
 import de.s2hmobile.bitmaps.framework.DiskLruCache;
 
 /**
- * This class handles disk and memory caching of bitmaps in conjunction with the
+ * Handles disk and memory caching of bitmaps in conjunction with the
  * {@link ImageLoader} class and its subclasses. Use
  * {@link ImageCache#getInstance(FragmentManager, ImageCacheParams)} to get an
  * instance of this class, although usually a cache should be added directly to
@@ -67,8 +67,8 @@ public class ImageCache {
 		 */
 		private static final int DEFAULT_MEMORY_FRACTION = 4;
 
-		public CompressFormat compressFormat = DEFAULT_COMPRESS_FORMAT;
-		public int compressQuality = DEFAULT_COMPRESS_QUALITY;
+		public CompressFormat compressFormat = CompressFormat.JPEG;
+		public int compressQuality = 70;
 
 		/*
 		 * Parameters for disk cache.
@@ -98,10 +98,8 @@ public class ImageCache {
 		 */
 		public ImageCacheParams(final Context context,
 				final String diskCacheDirectoryName) {
-
 			diskCacheDir = ExternalStorageHandler.getDiskCacheDir(context,
 					diskCacheDirectoryName);
-
 		}
 
 		/**
@@ -174,10 +172,6 @@ public class ImageCache {
 		}
 	}
 
-	// Compression settings when writing images to disk cache
-	private static final CompressFormat DEFAULT_COMPRESS_FORMAT = CompressFormat.JPEG;
-
-	private static final int DEFAULT_COMPRESS_QUALITY = 70;
 	private static final boolean DEFAULT_DISK_CACHE_ENABLED = true;
 
 	// Default disk cache size in bytes
