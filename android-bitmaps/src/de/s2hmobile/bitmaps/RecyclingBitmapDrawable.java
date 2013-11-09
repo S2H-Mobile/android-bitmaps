@@ -22,9 +22,9 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 
 /**
- * A BitmapDrawable that keeps track of whether it is being displayed or cached.
- * When the drawable is no longer being displayed or cached,
- * {@link Bitmap#recycle() recycle()} will be called on this drawable's bitmap.
+ * A {@link BitmapDrawable} that keeps track of whether it is being displayed or
+ * cached. When the drawable is no longer being displayed or cached,
+ * {@link Bitmap#recycle()} will be called on this drawable's bitmap.
  */
 public class RecyclingBitmapDrawable extends BitmapDrawable {
 
@@ -33,8 +33,46 @@ public class RecyclingBitmapDrawable extends BitmapDrawable {
 
 	private boolean mHasBeenDisplayed = false;
 
-	public RecyclingBitmapDrawable(Resources res, Bitmap bitmap) {
+	public RecyclingBitmapDrawable(final Resources res, final Bitmap bitmap) {
 		super(res, bitmap);
+	}
+
+	/**
+	 * Notify the drawable that the cache state has changed. Internally a count
+	 * is kept so that the drawable knows when it is no longer being cached.
+	 * 
+	 * @param isCached
+	 *            - whether the drawable is being cached or not
+	 */
+	public void setIsCached(final boolean isCached) {
+		synchronized (this) {
+			if (isCached) {
+				mCacheRefCount++;
+			} else {
+				mCacheRefCount--;
+			}
+		}
+		checkState();
+	}
+
+	/**
+	 * Notify the drawable that the displayed state has changed. Internally a
+	 * count is kept so that the drawable knows when it is no longer being
+	 * displayed.
+	 * 
+	 * @param isDisplayed
+	 *            - whether the drawable is being displayed or not
+	 */
+	public void setIsDisplayed(final boolean isDisplayed) {
+		synchronized (this) {
+			if (isDisplayed) {
+				mDisplayRefCount++;
+				mHasBeenDisplayed = true;
+			} else {
+				mDisplayRefCount--;
+			}
+		}
+		checkState();
 	}
 
 	/**
@@ -58,45 +96,7 @@ public class RecyclingBitmapDrawable extends BitmapDrawable {
 	}
 
 	private synchronized boolean hasValidBitmap() {
-		final Bitmap bitmap = RecyclingBitmapDrawable.this.getBitmap();
+		final Bitmap bitmap = getBitmap();
 		return bitmap != null && !bitmap.isRecycled();
-	}
-
-	/**
-	 * Notify the drawable that the cache state has changed. Internally a count
-	 * is kept so that the drawable knows when it is no longer being cached.
-	 * 
-	 * @param isCached
-	 *            - Whether the drawable is being cached or not
-	 */
-	public void setIsCached(boolean isCached) {
-		synchronized (this) {
-			if (isCached) {
-				mCacheRefCount++;
-			} else {
-				mCacheRefCount--;
-			}
-		}
-		checkState();
-	}
-
-	/**
-	 * Notify the drawable that the displayed state has changed. Internally a
-	 * count is kept so that the drawable knows when it is no longer being
-	 * displayed.
-	 * 
-	 * @param isDisplayed
-	 *            - Whether the drawable is being displayed or not
-	 */
-	public void setIsDisplayed(boolean isDisplayed) {
-		synchronized (this) {
-			if (isDisplayed) {
-				mDisplayRefCount++;
-				mHasBeenDisplayed = true;
-			} else {
-				mDisplayRefCount--;
-			}
-		}
-		checkState();
 	}
 }

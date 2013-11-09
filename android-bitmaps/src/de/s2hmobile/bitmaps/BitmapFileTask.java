@@ -21,19 +21,18 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import de.s2hmobile.bitmaps.framework.AsyncTask;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.widget.ImageView;
+import de.s2hmobile.bitmaps.framework.AsyncTask;
 
 public final class BitmapFileTask extends BitmapBaseTask {
 
 	private final String mPath;
 
 	private BitmapFileTask(final String path,
-			final OnBitmapRenderedListener listener, final ImageView imageView) {
-		super(listener, imageView);
+			final OnBitmapRenderedListener listener) {
+		super(listener);
 		mPath = path;
 	}
 
@@ -54,6 +53,7 @@ public final class BitmapFileTask extends BitmapBaseTask {
 			final byte[] magnitude = digester.digest();
 			final BigInteger bigInt = new BigInteger(1, magnitude);
 			final String result = bigInt.toString(16);
+
 			// TODO remove log statement
 			android.util.Log.i("BitmapFetchTask", "resulting MD5 key is "
 					+ result);
@@ -89,15 +89,15 @@ public final class BitmapFileTask extends BitmapBaseTask {
 	 *            - the height of the target bitmap
 	 */
 	public static void renderBitmapFromFile(final File file,
-			final OnBitmapRenderedListener listener, final ImageView imageView,
-			final int targetWidth, final int targetHeight) {
+			final OnBitmapRenderedListener listener, final int targetWidth,
+			final int targetHeight) {
 
 		// check for file
 		if (file != null && file.exists()) {
 
 			// instantiate the task
 			final BitmapFileTask task = new BitmapFileTask(
-					file.getAbsolutePath(), listener, imageView);
+					file.getAbsolutePath(), listener);
 
 			// start the task with parameter array
 			final Integer[] params = { targetWidth, targetHeight };

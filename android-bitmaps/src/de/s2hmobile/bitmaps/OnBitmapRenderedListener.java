@@ -36,5 +36,5 @@ public interface OnBitmapRenderedListener {
 	 * @param taggedBitmap
 	 *            - the rescaled bitmap and its the key
 	 */
-	public void onBitmapRendered(final ImageView view, final Bitmap bitmap);
+	public void onBitmapRendered(final Bitmap bitmap);
 }

@@ -33,13 +33,12 @@ import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
-import de.s2hmobile.bitmaps.framework.AsyncTask;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.http.AndroidHttpClient;
 import android.os.Build;
 import android.widget.ImageView;
+import de.s2hmobile.bitmaps.framework.AsyncTask;
 
 /**
  * Decodes a bitmap from an image url. The parameters are an integer array
@@ -59,8 +58,8 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 	private final String mUrl;
 
 	private BitmapFetchTask(final String url,
-			final OnBitmapRenderedListener listener, final ImageView imageView) {
-		super(listener, imageView);
+			final OnBitmapRenderedListener listener) {
+		super(listener);
 		mUrl = url;
 	}
 
@@ -127,12 +126,11 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 	 *            - the height of the target bitmap
 	 */
 	public static void renderBitmapFromUrl(final String url,
-			final OnBitmapRenderedListener listener, final ImageView imageView,
-			final int targetWidth, final int targetHeight) {
+			final OnBitmapRenderedListener listener, final int targetWidth,
+			final int targetHeight) {
 
 		// instantiate the task
-		final BitmapFetchTask task = new BitmapFetchTask(url, listener,
-				imageView);
+		final BitmapFetchTask task = new BitmapFetchTask(url, listener);
 
 		// start the task with parameter array
 		final Integer[] params = { targetWidth, targetHeight };

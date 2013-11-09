@@ -16,11 +16,10 @@
 
 package de.s2hmobile.bitmaps;
 
-import de.s2hmobile.bitmaps.framework.AsyncTask;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.widget.ImageView;
+import de.s2hmobile.bitmaps.framework.AsyncTask;
 
 public class BitmapResourceTask extends BitmapBaseTask {
 
@@ -28,9 +27,8 @@ public class BitmapResourceTask extends BitmapBaseTask {
 	private final Resources mResources;
 
 	public BitmapResourceTask(final OnBitmapRenderedListener callback,
-			final ImageView imageView, final Resources resources,
-			final int resId) {
-		super(callback, imageView);
+			final Resources resources, final int resId) {
+		super(callback);
 		mResources = resources;
 		mResId = resId;
 	}
@@ -63,12 +61,11 @@ public class BitmapResourceTask extends BitmapBaseTask {
 
 	public static void renderBitmapFromResource(final Resources resources,
 			final int resId, final OnBitmapRenderedListener callback,
-			final ImageView imageView, final int targetWidth,
-			final int targetHeight) {
+			final int targetWidth, final int targetHeight) {
 
 		// create the task
 		final BitmapResourceTask task = new BitmapResourceTask(callback,
-				imageView, resources, resId);
+				resources, resId);
 
 		// start the task with parameters
 		final Integer[] params = { targetWidth, targetHeight };
@@ -116,7 +113,7 @@ public class BitmapResourceTask extends BitmapBaseTask {
 		options.inJustDecodeBounds = false;
 		options.inSampleSize = BitmapBaseTask.calculateInSampleSize(
 				imageHeight, imageWidth, targetHeight, targetWidth);
-		options.inPurgeable = true;
+		// options.inPurgeable = true;
 		return BitmapFactory.decodeResource(res, resId, options);
 	}
 }
