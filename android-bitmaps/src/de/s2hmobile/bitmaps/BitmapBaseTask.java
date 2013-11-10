@@ -16,20 +16,24 @@
 
 package de.s2hmobile.bitmaps;
 
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
+import android.util.Log;
 import de.s2hmobile.bitmaps.framework.AsyncTask;
 
 /**
- * Base class for bitmap tasks, holds the callback to the listener. Derived
- * classes store the data needed to access the image resource, for example a
- * url, a file system path or a resource Id.
+ * Base class for bitmap tasks, holds the callback to the listener and triggers
+ * it when the bitmap is ready. Derived classes store the data needed to access
+ * the image resource, for example a url, a file system path or a resource Id.
  * 
  * @author Stephan Hoehne
  * 
  */
 abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 
+	protected final ImageCache mCache;
 	private final OnBitmapRenderedListener mCallback;
 
 	/**
@@ -39,18 +43,18 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 	 * @param callback
 	 *            - a reference to the listener
 	 */
-	protected BitmapBaseTask(final OnBitmapRenderedListener callback) {
+	protected BitmapBaseTask(final OnBitmapRenderedListener callback,
+			final ImageCache cache) {
 		mCallback = callback;
+		mCache = cache;
 	}
 
 	/**
 	 * Derived classes should generate a key to tag the image.
 	 * 
-	 * @param bitmap
-	 *            - the bitmap
 	 * @return A key to tag the bitmap.
 	 */
-	protected abstract String createKey(final Bitmap bitmap);
+	protected abstract String createKey();
 
 	/**
 	 * Returns the rescaled bitmap to the caller. The bitmap is tagged with a
@@ -68,20 +72,39 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 		}
 	}
 
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	protected static void addInBitmapOptions(
+			final BitmapFactory.Options options, final ImageCache cache) {
+
+		// inBitmap only works with mutable bitmaps so force the decoder to
+		// return mutable bitmaps.
+		options.inMutable = true;
+
+		if (cache != null) {
+
+			// Try and find a bitmap to use for inBitmap
+			final Bitmap inBitmap = cache.getBitmapFromReusableSet(options);
+
+			if (inBitmap != null) {
+				if (BuildConfig.DEBUG) {
+					Log.i("ImageResizer", "Found bitmap to use for inBitmap");
+				}
+				options.inBitmap = inBitmap;
+			}
+		}
+	}
+
 	/**
 	 * Determines the factor the source image is scaled down by. The resulting
 	 * sample size is to be used in a {@link BitmapFactory.Options} object when
 	 * decoding bitmaps with {@link BitmapFactory}.
 	 * 
-	 * Compares the dimensions of source and target image and calculates the
-	 * smallest ratio.
-	 * 
-	 * Calculates the smallest sample size that will result in the final decoded
-	 * bitmap having a width and height equal to or larger than the requested
-	 * width and height.
-	 * 
-	 * Determines the scale factor by calculating the power of two that is
-	 * closest to this ratio.
+	 * <p>
+	 * Compares the dimensions of source and target image. Calculates the
+	 * smallest sample size that will result in the final decoded bitmap having
+	 * a width and height equal to or larger than the requested width and
+	 * height. Determines the sample size by calculating the power of two that
+	 * is closest to the ratio.
 	 * 
 	 * @param imageHeight
 	 *            - height of original image
@@ -153,4 +176,5 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 
 		return inSampleSize;
 	}
+
 }
