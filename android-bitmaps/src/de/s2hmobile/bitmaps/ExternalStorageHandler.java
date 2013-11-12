@@ -75,7 +75,8 @@ public final class ExternalStorageHandler {
 	 *            - a unique directory name to append to the cache dir
 	 * @return The cache directory.
 	 */
-	static File getDiskCacheDir(final Context context, final String uniqueName) {
+	static File getDiskCacheDir(final Context context, final String uniqueName)
+			throws IOException {
 
 		/*
 		 * Check if media is mounted or storage is built-in. If so, try and use
@@ -83,17 +84,16 @@ public final class ExternalStorageHandler {
 		 */
 		final File cacheDir = isExternalStorageWritable() ? context
 				.getExternalCacheDir() : context.getCacheDir();
-		if (cacheDir != null) {
-			final String path = cacheDir.getPath() + File.separator
-					+ uniqueName;
-
-			// TODO remove log statement
-			android.util.Log.i("Ext", "path = " + path);
-
-			return new File(path);
-		} else {
+		if (cacheDir == null) {
 			return null;
 		}
+		final String path = cacheDir.getPath() + File.separator + uniqueName;
+
+		// TODO remove log statement
+		android.util.Log.i("ExternalStorageHandler", "disk cache dir --- "
+				+ path);
+
+		return new File(path);
 	}
 
 	/**
@@ -104,16 +104,15 @@ public final class ExternalStorageHandler {
 	 */
 	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 	private static boolean isExternalStorageRemovable() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			return Environment.isExternalStorageRemovable();
-		} else {
-			return true;
-		}
+		return Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD ? Environment
+				.isExternalStorageRemovable() : true;
 	}
 
 	private static boolean isExternalStorageWritable() {
 		final String currentState = Environment.getExternalStorageState();
+
+		// is writable if mounted and not removable
 		return Environment.MEDIA_MOUNTED.equals(currentState)
-				|| !isExternalStorageRemovable();
+				&& !isExternalStorageRemovable();
 	}
 }

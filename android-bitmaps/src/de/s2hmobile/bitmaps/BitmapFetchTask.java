@@ -18,11 +18,8 @@ package de.s2hmobile.bitmaps;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -38,7 +35,6 @@ import android.graphics.BitmapFactory;
 import android.net.http.AndroidHttpClient;
 import android.os.Build;
 import android.widget.ImageView;
-import de.s2hmobile.bitmaps.framework.AsyncTask;
 
 /**
  * Decodes a bitmap from an image url. The parameters are an integer array
@@ -58,37 +54,38 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 	private final String mUrl;
 
 	private BitmapFetchTask(final String url,
-			final OnBitmapRenderedListener listener) {
-		super(listener);
+			final OnBitmapRenderedListener listener, final ImageCache cache) {
+		super(listener, cache);
 		mUrl = url;
 	}
 
 	@Override
-	protected String createKey(final Bitmap bitmap) {
-
-		final int width = bitmap.getWidth();
-		final int height = bitmap.getHeight();
-
-		final String source = new StringBuilder().append(mUrl).append("_")
-				.append(width).append("_").append(height).toString();
-
-		// TODO remove log statement
-		android.util.Log.i("BitmapFetchTask", "source for MD5 is " + source);
-
-		try {
-			final MessageDigest digester = MessageDigest.getInstance("MD5");
-			digester.update(source.getBytes(), 0, source.length());
-			final byte[] magnitude = digester.digest();
-			final BigInteger bigInt = new BigInteger(1, magnitude);
-			final String result = bigInt.toString(16);
-			// TODO remove log statement
-			android.util.Log.i("BitmapFetchTask", "resulting MD5 key is "
-					+ result);
-
-			return result;
-		} catch (final NoSuchAlgorithmException e) {
-			return null;
-		}
+	protected String createKey() {
+		return mUrl;
+		//
+		// final int width = bitmap.getWidth();
+		// final int height = bitmap.getHeight();
+		//
+		// final String source = new StringBuilder().append(mUrl).append("_")
+		// .append(width).append("_").append(height).toString();
+		//
+		// // TODO remove log statement
+		// android.util.Log.i("BitmapFetchTask", "source for MD5 is " + source);
+		//
+		// try {
+		// final MessageDigest digester = MessageDigest.getInstance("MD5");
+		// digester.update(source.getBytes(), 0, source.length());
+		// final byte[] magnitude = digester.digest();
+		// final BigInteger bigInt = new BigInteger(1, magnitude);
+		// final String result = bigInt.toString(16);
+		// // TODO remove log statement
+		// android.util.Log.i("BitmapFetchTask", "resulting MD5 key is "
+		// + result);
+		//
+		// return result;
+		// } catch (final NoSuchAlgorithmException e) {
+		// return null;
+		// }
 
 	}
 
@@ -125,17 +122,17 @@ public final class BitmapFetchTask extends BitmapBaseTask {
 	 * @param targetHeight
 	 *            - the height of the target bitmap
 	 */
-	public static void renderBitmapFromUrl(final String url,
-			final OnBitmapRenderedListener listener, final int targetWidth,
-			final int targetHeight) {
-
-		// instantiate the task
-		final BitmapFetchTask task = new BitmapFetchTask(url, listener);
-
-		// start the task with parameter array
-		final Integer[] params = { targetWidth, targetHeight };
-		task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, params);
-	}
+	// public static void renderBitmapFromUrl(final String url,
+	// final OnBitmapRenderedListener listener, final int targetWidth,
+	// final int targetHeight) {
+	//
+	// // instantiate the task
+	// final BitmapFetchTask task = new BitmapFetchTask(url, listener);
+	//
+	// // start the task with parameter array
+	// final Integer[] params = { targetWidth, targetHeight };
+	// task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, params);
+	// }
 
 	private static Bitmap decodeBitmapFromByteArray(final byte[] data,
 			final int targetWidth, final int targetHeight) {

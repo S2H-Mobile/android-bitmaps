@@ -19,33 +19,30 @@ package de.s2hmobile.bitmaps;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import de.s2hmobile.bitmaps.framework.AsyncTask;
+import android.os.Build;
 
 public class BitmapResourceTask extends BitmapBaseTask {
 
 	private final int mResId;
 	private final Resources mResources;
 
-	public BitmapResourceTask(final OnBitmapRenderedListener callback,
-			final Resources resources, final int resId) {
-		super(callback);
+	private BitmapResourceTask(final OnBitmapRenderedListener callback,
+			final Resources resources, final int resId, final ImageCache cache) {
+		super(callback, cache);
 		mResources = resources;
 		mResId = resId;
 	}
 
 	@Override
-	protected String createKey(final Bitmap bitmap) {
-
-		final int width = bitmap.getWidth();
-		final int height = bitmap.getHeight();
-
-		final String result = new StringBuilder().append(mResId).append("_")
-				.append(width).append("_").append(height).toString();
-
-		// TODO remove log statement
-		android.util.Log.i("BitmapResourceTask", "key is " + result);
-
-		return result;
+	protected String createKey() {
+		return String.valueOf(mResId);
+		// final int width = bitmap.getWidth();
+		// final int height = bitmap.getHeight();
+		//
+		// final String result = new StringBuilder().append(mResId).append("_")
+		// .append(width).append("_").append(height).toString();
+		//
+		// return result;
 	}
 
 	@Override
@@ -55,29 +52,31 @@ public class BitmapResourceTask extends BitmapBaseTask {
 		final int targetWidth = params[0];
 		final int targetHeight = params[1];
 
-		return decodeBitmapFromResource(mResources, mResId, targetWidth,
-				targetHeight);
+		// TODO hier zum Cache hinzufuegen
+
+		return decodeBitmapFromResource(targetWidth, targetHeight);
 	}
 
-	public static void renderBitmapFromResource(final Resources resources,
-			final int resId, final OnBitmapRenderedListener callback,
-			final int targetWidth, final int targetHeight) {
-
-		// create the task
-		final BitmapResourceTask task = new BitmapResourceTask(callback,
-				resources, resId);
-
-		// start the task with parameters
-		final Integer[] params = { targetWidth, targetHeight };
-		task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, params);
-	}
+	// TODO das ist der oeffentliche Zugang
+	// public static void renderBitmapFromResource(final Resources resources,
+	// final int resId, final OnBitmapRenderedListener callback,
+	// final int targetWidth, final int targetHeight, final ImageCache cache) {
+	//
+	// // create the task
+	// final BitmapResourceTask task = new BitmapResourceTask(callback,
+	// resources, resId, cache);
+	//
+	// // start the task with parameters
+	// final Integer[] params = { targetWidth, targetHeight };
+	// task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, params);
+	// }
 
 	/**
 	 * Decodes a bitmap from a resource image file.
 	 * 
 	 * @param res
 	 *            - the package resources
-	 * @param resId
+	 * @param mKey
 	 *            - the resource Id of the image file
 	 * @param targetWidth
 	 *            - the width of the target bitmap
@@ -85,8 +84,8 @@ public class BitmapResourceTask extends BitmapBaseTask {
 	 *            - the height of the target bitmap
 	 * @return The decoded bitmap, scaled to the target dimensions.
 	 */
-	private static Bitmap decodeBitmapFromResource(final Resources res,
-			final int resId, final int targetWidth, final int targetHeight) {
+	private Bitmap decodeBitmapFromResource(final int targetWidth,
+			final int targetHeight) {
 		final BitmapFactory.Options options = new BitmapFactory.Options();
 
 		/*
@@ -94,26 +93,23 @@ public class BitmapResourceTask extends BitmapBaseTask {
 		 * memory allocation) of the target bitmap.
 		 */
 		options.inJustDecodeBounds = true;
-		BitmapFactory.decodeResource(res, resId, options);
+		BitmapFactory.decodeResource(mResources, mResId, options);
 
 		// raw height and width of image
 		final int imageWidth = options.outWidth;
-
-		// TODO remove log statement
-		android.util.Log.i("BimapResourceTask.calculateInSampleSize()",
-				"raw width = " + imageWidth + " px");
-
 		final int imageHeight = options.outHeight;
 
-		// TODO remove log statement
-		android.util.Log.i("BimapResourceTask.calculateInSampleSize()",
-				"raw height = " + imageHeight + " px");
+		options.inSampleSize = BitmapBaseTask.calculateInSampleSize(
+				imageHeight, imageWidth, targetHeight, targetWidth);
+
+		// If we're running on Honeycomb or newer, try to use inBitmap
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			addInBitmapOptions(options, mCache);
+		}
 
 		// decode the image file into a bitmap
 		options.inJustDecodeBounds = false;
-		options.inSampleSize = BitmapBaseTask.calculateInSampleSize(
-				imageHeight, imageWidth, targetHeight, targetWidth);
-		// options.inPurgeable = true;
-		return BitmapFactory.decodeResource(res, resId, options);
+		options.inPurgeable = true;
+		return BitmapFactory.decodeResource(mResources, mResId, options);
 	}
 }

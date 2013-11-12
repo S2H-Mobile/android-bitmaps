@@ -19,7 +19,6 @@ package de.s2hmobile.bitmaps;
 import java.io.FileDescriptor;
 
 import android.annotation.TargetApi;
-import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -37,11 +36,11 @@ public class ImageResizer extends ImageLoader {
 
 	protected final int mImageWidth;
 
-	public ImageResizer(final Context context, final int imageHeight,
-			final int imageWidth) {
-		super(context);
-		mImageWidth = imageWidth;
-		mImageHeight = imageHeight;
+	public ImageResizer(final Resources res, final int targetHeight,
+			final int targetWidth) {
+		super(res);
+		mImageWidth = targetWidth;
+		mImageHeight = targetHeight;
 	}
 
 	/**
@@ -52,10 +51,12 @@ public class ImageResizer extends ImageLoader {
 	 * @param resId
 	 * @return
 	 */
-	@Override
-	protected Bitmap processBitmap(final int resId) {
-		return decodeSampledBitmapFromResource(mResources, resId, mImageWidth,
-				mImageHeight, getImageCache());
+	protected Bitmap processBitmap(final String key) {
+		// return decodeSampledBitmapFrom(mResources, key, mImageWidth,
+		// mImageHeight, getImageCache());
+		// return decodeSampledBitmapFromDescriptor(fileDescriptor, reqHeight,
+		// reqWidth, getImageCache());
+		return null;
 	}
 
 	/**
@@ -153,7 +154,7 @@ public class ImageResizer extends ImageLoader {
 	 * 
 	 * @param res
 	 *            The resources object containing the image data
-	 * @param resId
+	 * @param key
 	 *            The resource id of the image data
 	 * @param reqWidth
 	 *            The requested width of the resulting bitmap
@@ -166,36 +167,36 @@ public class ImageResizer extends ImageLoader {
 	 *         ratio and dimensions that are equal to or greater than the
 	 *         requested width and height
 	 */
-	public static Bitmap decodeSampledBitmapFromResource(final Resources res,
-			final int resId, final int reqWidth, final int reqHeight,
-			final ImageCache cache) {
-
-		final BitmapFactory.Options options = new BitmapFactory.Options();
-
-		/*
-		 * Read the dimensions of the source image prior to construction (and
-		 * memory allocation) of the target bitmap.
-		 */
-		options.inJustDecodeBounds = true;
-		BitmapFactory.decodeResource(res, resId, options);
-
-		// raw height and width of image
-		final int imageWidth = options.outWidth;
-		final int imageHeight = options.outHeight;
-
-		options.inSampleSize = calculateInSampleSize(imageHeight, imageWidth,
-				reqHeight, reqWidth);
-
-		// If we're running on Honeycomb or newer, try to use inBitmap
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			addInBitmapOptions(options, cache);
-		}
-
-		// decode the image file into a bitmap
-		options.inJustDecodeBounds = false;
-		options.inPurgeable = true;
-		return BitmapFactory.decodeResource(res, resId, options);
-	}
+	// public static Bitmap decodeSampledBitmapFromResource(final Resources res,
+	// final String key, final int reqWidth, final int reqHeight,
+	// final ImageCache cache) {
+	//
+	// final BitmapFactory.Options options = new BitmapFactory.Options();
+	//
+	// /*
+	// * Read the dimensions of the source image prior to construction (and
+	// * memory allocation) of the target bitmap.
+	// */
+	// options.inJustDecodeBounds = true;
+	// BitmapFactory.decodeResource(res, key, options);
+	//
+	// // raw height and width of image
+	// final int imageWidth = options.outWidth;
+	// final int imageHeight = options.outHeight;
+	//
+	// options.inSampleSize = calculateInSampleSize(imageHeight, imageWidth,
+	// reqHeight, reqWidth);
+	//
+	// // If we're running on Honeycomb or newer, try to use inBitmap
+	// if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+	// addInBitmapOptions(options, cache);
+	// }
+	//
+	// // decode the image file into a bitmap
+	// options.inJustDecodeBounds = false;
+	// options.inPurgeable = true;
+	// return BitmapFactory.decodeResource(res, key, options);
+	// }
 
 	/**
 	 * Determines the factor the source image is scaled down by. The resulting
@@ -277,8 +278,7 @@ public class ImageResizer extends ImageLoader {
 		}
 
 		// TODO remove log statement in production
-		android.util.Log.i("ImageResizer", "The sample size is " + inSampleSize
-				+ ".");
+		android.util.Log.i("ImageResizer", "scale factor " + inSampleSize);
 
 		return inSampleSize;
 	}
