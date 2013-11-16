@@ -50,13 +50,6 @@ abstract class BitmapBaseTask extends AsyncTask<Integer, Void, Bitmap> {
 	}
 
 	/**
-	 * Derived classes should generate a key to tag the image.
-	 * 
-	 * @return A key to tag the bitmap.
-	 */
-	protected abstract String createKey();
-
-	/**
 	 * Returns the rescaled bitmap to the caller. The bitmap is tagged with a
 	 * key string, as defined by derived classes. May return null, in order for
 	 * listeners to update their UI accordingly, e.g. with error messages.

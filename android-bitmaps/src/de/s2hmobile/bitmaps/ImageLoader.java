@@ -57,7 +57,7 @@ public abstract class ImageLoader {
 					closeCacheInternal();
 					break;
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				android.util.Log.e("ImageLoader", "disk io --- ", e);
 			}
 			return null;
@@ -87,22 +87,21 @@ public abstract class ImageLoader {
 		}
 	}
 
-	private static final int MESSAGE_CLEAR = 0;
-	private static final int MESSAGE_CLOSE = 3;
-	private static final int MESSAGE_FLUSH = 2;
-	private static final int MESSAGE_INIT_DISK_CACHE = 1;
+	private static final int MESSAGE_CLEAR = 0x10;
+	private static final int MESSAGE_CLOSE = 0x13;
+	private static final int MESSAGE_FLUSH = 0x12;
+	private static final int MESSAGE_INIT_DISK_CACHE = 0x11;
 
-	protected boolean mPauseWork = false;
+	// protected boolean mPauseWork = false;
+	// private boolean mExitTasksEarly = false;
 
 	protected final Resources mResources;
 
-	// private boolean mExitTasksEarly = false;
-
 	private ImageCache mImageCache = null;
 
-	private ImageCache.DiskCacheParams mImageCacheParams = null;
-
 	private Bitmap mLoadingBitmap = null;
+
+	private ImageCache.DiskCacheParams mParams = null;
 
 	// private final Object mPauseWorkLock = new Object();
 
@@ -118,11 +117,11 @@ public abstract class ImageLoader {
 	 * @param cacheParams
 	 *            The cache parameters to use for the image cache.
 	 */
-	public void addImageCache(final FragmentManager fragmentManager,
+	public void addCache(final FragmentManager fragmentManager,
 			final ImageCache.DiskCacheParams cacheParams, final int fraction) {
-		mImageCacheParams = cacheParams;
-		mImageCache = ImageCache.getInstance(fragmentManager,
-				mImageCacheParams, fraction);
+		mParams = cacheParams;
+		mImageCache = ImageCache
+				.getInstance(fragmentManager, mParams, fraction);
 		new CacheAsyncTask().execute(MESSAGE_INIT_DISK_CACHE);
 	}
 
@@ -153,40 +152,36 @@ public abstract class ImageLoader {
 	 *            - the ImageView to bind the downloaded image to
 	 */
 	public void loadImageFromResource(final ImageView imageView,
-			final int resId, final int targetWidth, final int targeHeight) {
+			final int resId, final int targetWidth, final int targetHeight) {
 		if (resId == 0) {
 			return;
 		}
 
-		// TODO create key
+		final String key = new StringBuilder().append(resId).append("_")
+				.append(targetWidth).append("_").append(targetHeight)
+				.toString();
 
-		final String key = String.valueOf(resId);
+		final BitmapDrawable drawable = mImageCache == null ? null
+				: mImageCache.getBitmapDrawableFromMemCache(key);
 
-		BitmapDrawable value = null;
-
-		if (mImageCache != null) {
-			value = mImageCache.getBitmapDrawableFromMemCache(key);
-		}
-
-		if (value != null) {
+		if (drawable != null) {
 
 			// bitmap found in memory cache
-			imageView.setImageDrawable(value);
+			imageView.setImageDrawable(drawable);
 
-		} else if (ImageLoader.cancelPotentialWork(key, imageView)) {
+		} else if (cancelPotentialWork(key, imageView)) {
 
-			final BitmapWorkerTask task = new BitmapWorkerTask(imageView, key,
-					mResources, mImageCache);
+			final BitmapResourceTask task = new BitmapResourceTask(imageView,
+					key, mResources, mImageCache, resId);
 
 			// set a loading indicator as background
-			final AsyncDrawable asyncDrawable = new AsyncDrawable(mResources,
+			final AsyncDrawable placeHolder = new AsyncDrawable(mResources,
 					mLoadingBitmap, task);
-			imageView.setImageDrawable(asyncDrawable);
+			imageView.setImageDrawable(placeHolder);
 
-			// start the bitmap task
-
-			// TODO hier width und height
-			task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, resId);
+			// start the task with parameters
+			final Integer[] params = { targetWidth, targetHeight };
+			task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, params);
 		}
 	}
 
@@ -296,7 +291,7 @@ public abstract class ImageLoader {
 		}
 
 		// cancel task
-		final String bitmapData = bitmapWorkerTask.mKey;
+		final String bitmapData = bitmapWorkerTask.getKey();
 		if (bitmapData == null || !bitmapData.equals(key)) {
 			bitmapWorkerTask.cancel(true);
 			return true;
@@ -311,12 +306,12 @@ public abstract class ImageLoader {
 	 * 
 	 * @param imageView
 	 */
-	public static void cancelWork(final ImageView imageView) {
-		final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
-		if (bitmapWorkerTask != null) {
-			bitmapWorkerTask.cancel(true);
-		}
-	}
+	// public static void cancelWork(final ImageView imageView) {
+	// final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
+	// if (bitmapWorkerTask != null) {
+	// bitmapWorkerTask.cancel(true);
+	// }
+	// }
 
 	/**
 	 * @param imageView
@@ -325,13 +320,16 @@ public abstract class ImageLoader {
 	 *         this imageView. null if there is no such task.
 	 */
 	static BitmapWorkerTask getBitmapWorkerTask(final ImageView imageView) {
-		if (imageView != null) {
-			final Drawable drawable = imageView.getDrawable();
-			if (drawable instanceof AsyncDrawable) {
-				final AsyncDrawable asyncDrawable = (AsyncDrawable) drawable;
-				return asyncDrawable.getBitmapWorkerTask();
-			}
+		if (imageView == null) {
+			return null;
 		}
-		return null;
+
+		final Drawable drawable = imageView.getDrawable();
+		if (!(drawable instanceof AsyncDrawable)) {
+			return null;
+		}
+
+		final AsyncDrawable placeHolder = (AsyncDrawable) drawable;
+		return placeHolder.getBitmapWorkerTask();
 	}
 }

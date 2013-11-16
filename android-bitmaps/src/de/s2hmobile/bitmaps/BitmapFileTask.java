@@ -17,9 +17,6 @@
 package de.s2hmobile.bitmaps;
 
 import java.io.File;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -31,39 +28,39 @@ public final class BitmapFileTask extends BitmapBaseTask {
 	private final String mPath;
 
 	private BitmapFileTask(final String path,
-			final OnBitmapRenderedListener listener) {
-		super(listener);
+			final OnBitmapRenderedListener listener, final ImageCache cache) {
+		super(listener, cache);
 		mPath = path;
 	}
 
-	@Override
-	protected String createKey(final Bitmap bitmap) {
-		final int width = bitmap.getWidth();
-		final int height = bitmap.getHeight();
-
-		final String source = new StringBuilder().append(mPath).append("_")
-				.append(width).append("_").append(height).toString();
-
-		// TODO remove log statement
-		android.util.Log.i("BitmapFetchTask", "source for MD5 is " + source);
-
-		try {
-			final MessageDigest digester = MessageDigest.getInstance("MD5");
-			digester.update(source.getBytes(), 0, source.length());
-			final byte[] magnitude = digester.digest();
-			final BigInteger bigInt = new BigInteger(1, magnitude);
-			final String result = bigInt.toString(16);
-
-			// TODO remove log statement
-			android.util.Log.i("BitmapFetchTask", "resulting MD5 key is "
-					+ result);
-
-			return result;
-		} catch (final NoSuchAlgorithmException e) {
-			return null;
-		}
-
-	}
+	// @Override
+	// protected String createKey() {
+	// return mPath;
+	// final int width = bitmap.getWidth();
+	// final int height = bitmap.getHeight();
+	//
+	// final String source = new StringBuilder().append(mPath).append("_")
+	// .append(width).append("_").append(height).toString();
+	//
+	// // TODO remove log statement
+	// android.util.Log.i("BitmapFetchTask", "source for MD5 is " + source);
+	//
+	// try {
+	// final MessageDigest digester = MessageDigest.getInstance("MD5");
+	// digester.update(source.getBytes(), 0, source.length());
+	// final byte[] magnitude = digester.digest();
+	// final BigInteger bigInt = new BigInteger(1, magnitude);
+	// final String result = bigInt.toString(16);
+	//
+	// // TODO remove log statement
+	// android.util.Log.i("BitmapFetchTask", "resulting MD5 key is "
+	// + result);
+	//
+	// return result;
+	// } catch (final NoSuchAlgorithmException e) {
+	// return null;
+	// }
+	// }
 
 	@Override
 	protected Bitmap doInBackground(final Integer... params) {
@@ -90,14 +87,14 @@ public final class BitmapFileTask extends BitmapBaseTask {
 	 */
 	public static void renderBitmapFromFile(final File file,
 			final OnBitmapRenderedListener listener, final int targetWidth,
-			final int targetHeight) {
+			final int targetHeight, final ImageCache cache) {
 
 		// check for file
 		if (file != null && file.exists()) {
 
 			// instantiate the task
 			final BitmapFileTask task = new BitmapFileTask(
-					file.getAbsolutePath(), listener);
+					file.getAbsolutePath(), listener, cache);
 
 			// start the task with parameter array
 			final Integer[] params = { targetWidth, targetHeight };

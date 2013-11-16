@@ -43,6 +43,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.util.Log;
+import de.s2hmobile.bitmaps.ImageCache.DiskCacheParams;
 import de.s2hmobile.bitmaps.framework.DiskLruCache;
 
 /**
@@ -127,12 +128,10 @@ public class ImageCache {
 
 	}
 
-	private static final int DISK_CACHE_INDEX = 0;
+	private static final int DISK_CACHE_INDEX = 0x0;
 
 	// TODO remove log statements
 	private static final String TAG = "ImageCache";
-
-	private DiskCacheParams mCacheParams = null;
 
 	/** Final empty lock for synchronizing the cache access. */
 	private final Object mDiskCacheLock = new Object();
@@ -140,7 +139,9 @@ public class ImageCache {
 	private boolean mDiskCacheStarting = true;
 
 	private DiskLruCache mDiskLruCache = null;
+
 	private ImageMemoryCache mMemoryCache = null;
+	private DiskCacheParams mParams = null;
 	private HashSet<SoftReference<Bitmap>> mReusableBitmaps = null;
 
 	/**
@@ -154,7 +155,7 @@ public class ImageCache {
 	 *            - the cache parameters to initialize the cache
 	 */
 	private ImageCache(final DiskCacheParams params, final int fraction) {
-		mCacheParams = params;
+		mParams = params;
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			mReusableBitmaps = new HashSet<SoftReference<Bitmap>>();
@@ -257,6 +258,15 @@ public class ImageCache {
 	}
 
 	/**
+	 * Get bitmap from memory cache.
+	 * 
+	 * @return The bitmap drawable if found in cache, null otherwise
+	 */
+	BitmapDrawable getBitmapDrawableFromMemCache(final String key) {
+		return mMemoryCache != null ? mMemoryCache.get(key) : null;
+	}
+
+	/**
 	 * Get from disk cache.
 	 * 
 	 * @param resId
@@ -312,15 +322,6 @@ public class ImageCache {
 	}
 
 	/**
-	 * Get bitmap from memory cache.
-	 * 
-	 * @return The bitmap drawable if found in cache, null otherwise
-	 */
-	BitmapDrawable getBitmapDrawableFromMemCache(final String key) {
-		return mMemoryCache != null ? mMemoryCache.get(key) : null;
-	}
-
-	/**
 	 * Initializes the disk cache. Note that this includes disk access so this
 	 * should not be executed on the main/UI thread. By default an ImageCache
 	 * does not initialize the disk cache when it is created, instead you should
@@ -330,11 +331,47 @@ public class ImageCache {
 		synchronized (mDiskCacheLock) {
 			if (mDiskLruCache == null || mDiskLruCache.isClosed()) {
 
-				mDiskLruCache = makeDiskCache(mCacheParams);
+				mDiskLruCache = createDiskCache(mParams);
 			}
 			mDiskCacheStarting = false;
 			mDiskCacheLock.notifyAll();
 		}
+	}
+
+	/**
+	 * Decode and sample down a bitmap from a file input stream to the requested
+	 * width and height.
+	 * 
+	 * @param fd
+	 *            The file descriptor to read from
+	 * @param reqWidth
+	 *            The requested width of the resulting bitmap
+	 * @param reqHeight
+	 *            The requested height of the resulting bitmap
+	 * @param cache
+	 *            The ImageCache used to find candidate bitmaps for use with
+	 *            inBitmap
+	 * @return A bitmap sampled down from the original with the same aspect
+	 *         ratio and dimensions that are equal to or greater than the
+	 *         requested width and height
+	 */
+	private Bitmap decodeSampledBitmapFromDescriptor(final FileDescriptor fd) {
+		final BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inSampleSize = 1;
+		options.inJustDecodeBounds = false;
+
+		// If we're running on Honeycomb or newer, try to use inBitmap
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			options.inMutable = true;
+
+			// Try and find a bitmap to use for inBitmap
+			final Bitmap inBitmap = getBitmapFromReusableSet(options);
+			if (inBitmap != null) {
+				options.inBitmap = inBitmap;
+			}
+		}
+
+		return BitmapFactory.decodeFileDescriptor(fd, null, options);
 	}
 
 	/**
@@ -364,9 +401,7 @@ public class ImageCache {
 			// Decode bitmap, but we don't want to sample so
 			// give
 			// MAX_VALUE as the target dimensions
-			final Bitmap result = ImageResizer
-					.decodeSampledBitmapFromDescriptor(fd, Integer.MAX_VALUE,
-							Integer.MAX_VALUE, this);
+			final Bitmap result = decodeSampledBitmapFromDescriptor(fd);
 			return result;
 
 		} finally {
@@ -408,39 +443,6 @@ public class ImageCache {
 		return imageCache;
 	}
 
-	private static void writeToDisk(final DiskLruCache cache, final String key,
-			final Bitmap bitmap) throws IOException {
-		final String hashKey = hashKeyForDisk(key);
-
-		android.util.Log.i("ImageCache", "Hash for " + key + " is " + hashKey);
-
-		OutputStream out = null;
-		try {
-			final DiskLruCache.Snapshot snapshot = cache.get(hashKey);
-			if (snapshot == null) {
-				final DiskLruCache.Editor editor = cache.edit(hashKey);
-				if (editor != null) {
-
-					// TODO remove
-					android.util.Log.i("ImageCache", "Write " + key
-							+ " to disk cache.");
-
-					out = editor.newOutputStream(DISK_CACHE_INDEX);
-					bitmap.compress(CompressFormat.JPEG, 100, out);
-					editor.commit();
-					out.close();
-				}
-			} else {
-				snapshot.getInputStream(DISK_CACHE_INDEX).close();
-			}
-
-		} finally {
-			if (out != null) {
-				out.close();
-			}
-		}
-	}
-
 	private static String bytesToHexString(final byte[] bytes) {
 
 		// http://stackoverflow.com/questions/332079
@@ -469,6 +471,25 @@ public class ImageCache {
 		final int height = targetOptions.outHeight / targetOptions.inSampleSize;
 
 		return candidate.getWidth() == width && candidate.getHeight() == height;
+	}
+
+	private static DiskLruCache createDiskCache(final DiskCacheParams params)
+			throws IOException {
+		final File diskCacheDir = params.getDiskCacheDir();
+		if (diskCacheDir == null) {
+			return null;
+		}
+
+		if (!diskCacheDir.exists()) {
+			diskCacheDir.mkdirs();
+		}
+
+		final int diskCacheSize = params.getDiskCacheSize();
+		if (getUsableSpace(diskCacheDir) <= diskCacheSize) {
+			return null;
+		}
+
+		return DiskLruCache.open(diskCacheDir, 1, 1, diskCacheSize);
 	}
 
 	/**
@@ -536,22 +557,36 @@ public class ImageCache {
 		return cacheKey;
 	}
 
-	private static DiskLruCache makeDiskCache(DiskCacheParams params)
-			throws IOException {
-		final File diskCacheDir = params.getDiskCacheDir();
-		if (diskCacheDir == null) {
-			return null;
-		}
+	private static void writeToDisk(final DiskLruCache cache, final String key,
+			final Bitmap bitmap) throws IOException {
+		final String hashKey = hashKeyForDisk(key);
 
-		if (!diskCacheDir.exists()) {
-			diskCacheDir.mkdirs();
-		}
+		android.util.Log.i("ImageCache", "Hash for " + key + " is " + hashKey);
 
-		final int diskCacheSize = params.getDiskCacheSize();
-		if (getUsableSpace(diskCacheDir) <= diskCacheSize) {
-			return null;
-		}
+		OutputStream out = null;
+		try {
+			final DiskLruCache.Snapshot snapshot = cache.get(hashKey);
+			if (snapshot == null) {
+				final DiskLruCache.Editor editor = cache.edit(hashKey);
+				if (editor != null) {
 
-		return DiskLruCache.open(diskCacheDir, 1, 1, diskCacheSize);
+					// TODO remove
+					android.util.Log.i("ImageCache", "Write " + key
+							+ " to disk cache.");
+
+					out = editor.newOutputStream(DISK_CACHE_INDEX);
+					bitmap.compress(CompressFormat.JPEG, 100, out);
+					editor.commit();
+					out.close();
+				}
+			} else {
+				snapshot.getInputStream(DISK_CACHE_INDEX).close();
+			}
+
+		} finally {
+			if (out != null) {
+				out.close();
+			}
+		}
 	}
 }
