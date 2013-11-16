@@ -26,7 +26,8 @@ class ImageMemoryCache {
 	private final LruCache<String, BitmapDrawable> mMemoryCache;
 	private final HashSet<SoftReference<Bitmap>> mReusableBitmaps;
 
-	ImageMemoryCache(final HashSet<SoftReference<Bitmap>> reusableBitmaps,
+	protected ImageMemoryCache(
+			final HashSet<SoftReference<Bitmap>> reusableBitmaps,
 			final int fraction) {
 
 		mReusableBitmaps = reusableBitmaps;
@@ -76,7 +77,7 @@ class ImageMemoryCache {
 		};
 	}
 
-	void evictAll() {
+	protected void evictAll() {
 		mMemoryCache.evictAll();
 	}
 
@@ -87,7 +88,7 @@ class ImageMemoryCache {
 	 *            - the key
 	 * @return The bitmap associated to the key.
 	 */
-	BitmapDrawable get(final String key) {
+	protected BitmapDrawable get(final String key) {
 
 		android.util.Log.i("ImageMemoryCache", "get bitmap " + key);
 
@@ -102,7 +103,7 @@ class ImageMemoryCache {
 	 * @param value
 	 *            -the bitmap to be cached
 	 */
-	void put(final String key, final BitmapDrawable value) {
+	protected void put(final String key, final BitmapDrawable value) {
 		if (get(key) == null && value != null) {
 
 			android.util.Log.i("ImageMemoryCache", "put bitmap " + key);
@@ -128,9 +129,9 @@ class ImageMemoryCache {
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 			return bitmap.getByteCount();
-		} else {
-			return bitmap.getRowBytes() * bitmap.getHeight();
 		}
+
+		return bitmap.getRowBytes() * bitmap.getHeight();
 	}
 
 	/**

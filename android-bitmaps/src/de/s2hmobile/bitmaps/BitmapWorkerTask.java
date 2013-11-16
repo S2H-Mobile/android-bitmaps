@@ -74,6 +74,8 @@ abstract class BitmapWorkerTask extends
 			try {
 				bitmap = mImageCache.getBitmapFromDiskCache(mKey);
 			} catch (final IOException e) {
+				android.util.Log.e("BitmapWorkerTask",
+						"get from disk throws IOException --- ", e);
 			}
 		}
 
@@ -117,6 +119,8 @@ abstract class BitmapWorkerTask extends
 			try {
 				mImageCache.addToCache(mKey, drawable);
 			} catch (final IOException e) {
+				android.util.Log.e("BitmapWorkerTask",
+						"add to cache throws IOException --- ", e);
 			}
 		}
 		return drawable;

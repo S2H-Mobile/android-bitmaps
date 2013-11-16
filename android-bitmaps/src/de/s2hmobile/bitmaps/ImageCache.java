@@ -57,43 +57,9 @@ import de.s2hmobile.bitmaps.framework.DiskLruCache;
 public class ImageCache {
 
 	/**
-	 * A simple non-UI fragment that stores a single object and is retained over
-	 * configuration changes. It will be used to retain the {@link ImageCache}
-	 * object.
-	 */
-	public static class RetainFragment extends Fragment {
-		private Object mObject = null;
-
-		public RetainFragment() {
-		}
-
-		public Object getObject() {
-			return mObject;
-		}
-
-		@Override
-		public void onCreate(final Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);
-
-			// this fragment is retained over a configuration change
-			setRetainInstance(true);
-		}
-
-		/**
-		 * Store a single object in this Fragment.
-		 * 
-		 * @param object
-		 *            - the object to store
-		 */
-		public void setObject(final Object object) {
-			mObject = object;
-		}
-	}
-
-	/**
 	 * A holder class that contains disk cache parameters.
 	 */
-	static class DiskCacheParams {
+	public static class DiskCacheParams {
 
 		private final File diskCacheDir;
 
@@ -126,6 +92,40 @@ public class ImageCache {
 			return diskCacheSize;
 		}
 
+	}
+
+	/**
+	 * A simple non-UI fragment that stores a single object and is retained over
+	 * configuration changes. It will be used to retain the {@link ImageCache}
+	 * object.
+	 */
+	public static class RetainFragment extends Fragment {
+		private Object mObject = null;
+
+		public RetainFragment() {
+		}
+
+		public Object getObject() {
+			return mObject;
+		}
+
+		@Override
+		public void onCreate(final Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+
+			// this fragment is retained over a configuration change
+			setRetainInstance(true);
+		}
+
+		/**
+		 * Store a single object in this Fragment.
+		 * 
+		 * @param object
+		 *            - the object to store
+		 */
+		public void setObject(final Object object) {
+			mObject = object;
+		}
 	}
 
 	private static final int DISK_CACHE_INDEX = 0x0;
@@ -355,6 +355,7 @@ public class ImageCache {
 	 *         ratio and dimensions that are equal to or greater than the
 	 *         requested width and height
 	 */
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	private Bitmap decodeSampledBitmapFromDescriptor(final FileDescriptor fd) {
 		final BitmapFactory.Options options = new BitmapFactory.Options();
 		options.inSampleSize = 1;
@@ -530,15 +531,15 @@ public class ImageCache {
 	private static long getUsableSpace(final File path) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 			return path.getUsableSpace();
-		} else {
-			final StatFs stats = new StatFs(path.getPath());
-
-			@SuppressWarnings("deprecation")
-			final int usableSpace = stats.getBlockSize()
-					* stats.getAvailableBlocks();
-
-			return usableSpace;
 		}
+
+		return getUsableSpaceFroyo(path);
+	}
+
+	@SuppressWarnings("deprecation")
+	private static int getUsableSpaceFroyo(final File path) {
+		final StatFs stats = new StatFs(path.getPath());
+		return stats.getBlockSize() * stats.getAvailableBlocks();
 	}
 
 	/**

@@ -26,10 +26,9 @@ public class BitmapResourceTask extends BitmapWorkerTask {
 
 	private final int mResId;
 
-	BitmapResourceTask(final ImageView imageView, final String key,
+	protected BitmapResourceTask(final ImageView imageView, final String key,
 			final Resources res, final ImageCache cache, final int resId) {
 		super(imageView, key, res, cache);
-
 		mResId = resId;
 	}
 

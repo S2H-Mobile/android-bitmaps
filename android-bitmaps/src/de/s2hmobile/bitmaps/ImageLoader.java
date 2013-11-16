@@ -95,33 +95,30 @@ public abstract class ImageLoader {
 	// protected boolean mPauseWork = false;
 	// private boolean mExitTasksEarly = false;
 
-	protected final Resources mResources;
-
 	private ImageCache mImageCache = null;
-
 	private Bitmap mLoadingBitmap = null;
 
-	private ImageCache.DiskCacheParams mParams = null;
-
 	// private final Object mPauseWorkLock = new Object();
+
+	protected final Resources mResources;
 
 	protected ImageLoader(final Resources resources) {
 		mResources = resources;
 	}
 
 	/**
-	 * Adds an {@link ImageCache} to this {@link ImageWorker} to handle disk and
-	 * memory bitmap caching.
+	 * Adds a cache to handle disk and memory bitmap caching.
 	 * 
-	 * @param fragmentManager
-	 * @param cacheParams
-	 *            The cache parameters to use for the image cache.
+	 * @param fm
+	 *            - to handle the retain fragment
+	 * @param params
+	 *            - for the disk cache
+	 * @param fraction
+	 *            - the memory fraction to use for the cache
 	 */
-	public void addCache(final FragmentManager fragmentManager,
-			final ImageCache.DiskCacheParams cacheParams, final int fraction) {
-		mParams = cacheParams;
-		mImageCache = ImageCache
-				.getInstance(fragmentManager, mParams, fraction);
+	public void addCache(final FragmentManager fm,
+			final ImageCache.DiskCacheParams params, final int fraction) {
+		mImageCache = ImageCache.getInstance(fm, params, fraction);
 		new CacheAsyncTask().execute(MESSAGE_INIT_DISK_CACHE);
 	}
 
@@ -160,6 +157,8 @@ public abstract class ImageLoader {
 		final String key = new StringBuilder().append(resId).append("_")
 				.append(targetWidth).append("_").append(targetHeight)
 				.toString();
+
+		android.util.Log.i("ImageLoader", "load key --- " + key);
 
 		final BitmapDrawable drawable = mImageCache == null ? null
 				: mImageCache.getBitmapDrawableFromMemCache(key);
