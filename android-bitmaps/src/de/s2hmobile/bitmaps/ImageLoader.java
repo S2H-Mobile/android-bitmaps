@@ -117,7 +117,7 @@ public class ImageLoader {
 	 *            - the memory fraction to use for the cache
 	 */
 	public void addCache(final FragmentManager fm,
-			final ImageCache.DiskCacheParams params, final int fraction) {
+			final DiskCacheParams params, final int fraction) {
 		mImageCache = ImageCache.getInstance(fm, params, fraction);
 		new CacheAsyncTask().execute(MESSAGE_INIT_DISK_CACHE);
 	}

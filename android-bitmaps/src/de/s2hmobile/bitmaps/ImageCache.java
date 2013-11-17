@@ -130,9 +130,6 @@ public class ImageCache {
 
 	private static final int DISK_CACHE_INDEX = 0x0;
 
-	// TODO remove log statements
-	private static final String TAG = "ImageCache";
-
 	/** Final empty lock for synchronizing the cache access. */
 	private final Object mDiskCacheLock = new Object();
 
@@ -171,20 +168,12 @@ public class ImageCache {
 	public void clearCache() throws IOException {
 		if (mMemoryCache != null) {
 			mMemoryCache.evictAll();
-			if (BuildConfig.DEBUG) {
-				Log.d(TAG, "Memory cache cleared");
-			}
 		}
 
 		synchronized (mDiskCacheLock) {
 			mDiskCacheStarting = true;
 			if (mDiskLruCache != null && !mDiskLruCache.isClosed()) {
-
 				mDiskLruCache.delete();
-				if (BuildConfig.DEBUG) {
-					Log.d(TAG, "Disk cache cleared");
-				}
-
 				mDiskLruCache = null;
 				initDiskCache();
 			}
@@ -216,9 +205,6 @@ public class ImageCache {
 		synchronized (mDiskCacheLock) {
 			if (mDiskLruCache != null) {
 				mDiskLruCache.flush();
-				if (BuildConfig.DEBUG) {
-					Log.d(TAG, "Disk cache flushed");
-				}
 			}
 		}
 	}
@@ -397,7 +383,7 @@ public class ImageCache {
 			}
 
 			final FileDescriptor fd = ((FileInputStream) inputStream).getFD();
-			Log.i(TAG, "Disk cache hit for " + key);
+			Log.i("ImageCache", "Disk cache hit for " + key);
 			return decodeSampledBitmapFromDescriptor(fd);
 
 		} finally {
@@ -469,8 +455,8 @@ public class ImageCache {
 		return candidate.getWidth() == width && candidate.getHeight() == height;
 	}
 
-	private static DiskLruCache createDiskCache(
-			final ImageCache.DiskCacheParams params) throws IOException {
+	private static DiskLruCache createDiskCache(final DiskCacheParams params)
+			throws IOException {
 		if (params == null) {
 			return null;
 		}
@@ -505,18 +491,18 @@ public class ImageCache {
 			final FragmentManager fm) {
 
 		// Check to see if we have retained the worker fragment.
-		RetainFragment mRetainFragment = (RetainFragment) fm
-				.findFragmentByTag(TAG);
+		RetainFragment fragment = (RetainFragment) fm
+				.findFragmentByTag("fragment_retain");
 
 		// If not retained (or first time running), we need to create and add
 		// it.
-		if (mRetainFragment == null) {
-			mRetainFragment = new RetainFragment();
-			fm.beginTransaction().add(mRetainFragment, TAG)
+		if (fragment == null) {
+			fragment = new RetainFragment();
+			fm.beginTransaction().add(fragment, "fragment_retain")
 					.commitAllowingStateLoss();
 		}
 
-		return mRetainFragment;
+		return fragment;
 	}
 
 	/**

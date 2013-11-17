@@ -29,12 +29,11 @@ class ImageMemoryCache {
 	protected ImageMemoryCache(
 			final HashSet<SoftReference<Bitmap>> reusableBitmaps,
 			final int fraction) {
-
 		mReusableBitmaps = reusableBitmaps;
-
 		final int cacheSize = getCacheSize(fraction);
 
-		android.util.Log.i("ImageMemoryCache", "create size --- " + cacheSize);
+		android.util.Log
+				.i("ImageMemoryCache", "cache size kB --- " + cacheSize);
 
 		mMemoryCache = new LruCache<String, BitmapDrawable>(cacheSize) {
 
@@ -89,9 +88,6 @@ class ImageMemoryCache {
 	 * @return The bitmap associated to the key.
 	 */
 	protected BitmapDrawable get(final String key) {
-
-		android.util.Log.i("ImageMemoryCache", "get bitmap " + key);
-
 		return mMemoryCache.get(key);
 	}
 
@@ -105,9 +101,6 @@ class ImageMemoryCache {
 	 */
 	protected void put(final String key, final BitmapDrawable value) {
 		if (get(key) == null && value != null) {
-
-			android.util.Log.i("ImageMemoryCache", "put bitmap " + key);
-
 			mMemoryCache.put(key, value);
 		}
 	}
@@ -116,13 +109,12 @@ class ImageMemoryCache {
 	 * Get the size in bytes of a {@link BitmapDrawable}.
 	 * 
 	 * @param bitmapDrawable
-	 *            - the bitmap drawable
+	 *            - the bitmap drawable to measure
 	 * @return The size of the bitmap in bytes.
 	 */
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 	private static int getBitmapSize(final BitmapDrawable bitmapDrawable) {
 		final Bitmap bitmap = bitmapDrawable.getBitmap();
-
 		if (bitmap == null) {
 			return 0;
 		}
