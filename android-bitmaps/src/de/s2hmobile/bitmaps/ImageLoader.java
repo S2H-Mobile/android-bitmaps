@@ -36,7 +36,7 @@ import de.s2hmobile.bitmaps.framework.AsyncTask;
  * cache, running the work in a background thread and setting a placeholder
  * image.
  */
-public abstract class ImageLoader {
+public class ImageLoader {
 
 	protected class CacheAsyncTask extends AsyncTask<Integer, Void, Void> {
 
@@ -100,9 +100,9 @@ public abstract class ImageLoader {
 
 	// private final Object mPauseWorkLock = new Object();
 
-	protected final Resources mResources;
+	private final Resources mResources;
 
-	protected ImageLoader(final Resources resources) {
+	public ImageLoader(final Resources resources) {
 		mResources = resources;
 	}
 
@@ -154,11 +154,10 @@ public abstract class ImageLoader {
 			return;
 		}
 
+		// TODO reicht einmal aufrufen
 		final String key = new StringBuilder().append(resId).append("_")
 				.append(targetWidth).append("_").append(targetHeight)
 				.toString();
-
-		android.util.Log.i("ImageLoader", "load key --- " + key);
 
 		final BitmapDrawable drawable = mImageCache == null ? null
 				: mImageCache.getBitmapDrawableFromMemCache(key);
@@ -264,24 +263,23 @@ public abstract class ImageLoader {
 	}
 
 	/**
-	 * Subclasses should override this to define any processing or work that
-	 * must happen to produce the final bitmap. This will be executed in a
-	 * background thread and be long running. For example, you could resize a
-	 * large bitmap here, or pull down an image from the network.
+	 * Cancels any pending work attached to the provided ImageView.
 	 * 
-	 * @param data
-	 *            The data to identify which image to process, as provided by
-	 *            {@link ImageWorker#loadImage(Object, ImageView)}
-	 * @return The processed bitmap
+	 * @param imageView
 	 */
-	// protected abstract Bitmap processBitmap(final String key);
+	public static void cancelWork(final ImageView imageView) {
+		final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
+		if (bitmapWorkerTask != null) {
+			bitmapWorkerTask.cancel(true);
+		}
+	}
 
 	/**
 	 * Returns true if the current work has been canceled or if there was no
 	 * work in progress on this image view. Returns false if the work in
 	 * progress deals with the same data. The work is not stopped in that case.
 	 */
-	public static boolean cancelPotentialWork(final String key,
+	static boolean cancelPotentialWork(final String key,
 			final ImageView imageView) {
 
 		final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
@@ -301,24 +299,13 @@ public abstract class ImageLoader {
 	}
 
 	/**
-	 * Cancels any pending work attached to the provided ImageView.
-	 * 
-	 * @param imageView
-	 */
-	// public static void cancelWork(final ImageView imageView) {
-	// final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
-	// if (bitmapWorkerTask != null) {
-	// bitmapWorkerTask.cancel(true);
-	// }
-	// }
-
-	/**
 	 * @param imageView
 	 *            Any imageView
 	 * @return Retrieve the currently active work task (if any) associated with
 	 *         this imageView. null if there is no such task.
 	 */
-	static BitmapWorkerTask getBitmapWorkerTask(final ImageView imageView) {
+	protected static BitmapWorkerTask getBitmapWorkerTask(
+			final ImageView imageView) {
 		if (imageView == null) {
 			return null;
 		}

@@ -397,13 +397,8 @@ public class ImageCache {
 			}
 
 			final FileDescriptor fd = ((FileInputStream) inputStream).getFD();
-
 			Log.i(TAG, "Disk cache hit for " + key);
-			// Decode bitmap, but we don't want to sample so
-			// give
-			// MAX_VALUE as the target dimensions
-			final Bitmap result = decodeSampledBitmapFromDescriptor(fd);
-			return result;
+			return decodeSampledBitmapFromDescriptor(fd);
 
 		} finally {
 			if (inputStream != null) {
@@ -474,8 +469,12 @@ public class ImageCache {
 		return candidate.getWidth() == width && candidate.getHeight() == height;
 	}
 
-	private static DiskLruCache createDiskCache(final DiskCacheParams params)
-			throws IOException {
+	private static DiskLruCache createDiskCache(
+			final ImageCache.DiskCacheParams params) throws IOException {
+		if (params == null) {
+			return null;
+		}
+
 		final File diskCacheDir = params.getDiskCacheDir();
 		if (diskCacheDir == null) {
 			return null;
