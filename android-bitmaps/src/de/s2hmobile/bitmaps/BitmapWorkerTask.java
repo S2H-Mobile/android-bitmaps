@@ -238,21 +238,6 @@ abstract class BitmapWorkerTask extends
 		}
 
 		/*
-		 * This offers some additional logic in case the image has a strange
-		 * aspect ratio. For example, a panorama may have a much larger width
-		 * than height. In these cases the total pixels might still end up being
-		 * too large to fit comfortably in memory, so we should be more
-		 * aggressive with sample down the image (=larger inSampleSize).
-		 * Anything more than 2x the requested pixels we'll sample down further
-		 */
-
-		// final float totalPixels = imageWidth * imageHeight;
-		// final float totalRequestedPixelsCap = reqWidth * reqHeight * 2;
-		// while (totalPixels / (ratio * ratio) > totalRequestedPixelsCap) {
-		// ratio++;
-		// }
-
-		/*
 		 * Determine the power of two that is closest to and smaller than the
 		 * scale factor.
 		 */

@@ -60,8 +60,8 @@ public class BitmapResourceTask extends BitmapWorkerTask {
 		final int imageWidth = options.outWidth;
 		final int imageHeight = options.outHeight;
 
-		options.inSampleSize = BitmapBaseTask.calculateInSampleSize(
-				imageHeight, imageWidth, targetHeight, targetWidth);
+		options.inSampleSize = calculateInSampleSize(imageHeight, imageWidth,
+				targetHeight, targetWidth);
 
 		// If we're running on Honeycomb or newer, try to use inBitmap
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -73,4 +73,5 @@ public class BitmapResourceTask extends BitmapWorkerTask {
 		options.inPurgeable = true;
 		return BitmapFactory.decodeResource(mResources, mResId, options);
 	}
+
 }

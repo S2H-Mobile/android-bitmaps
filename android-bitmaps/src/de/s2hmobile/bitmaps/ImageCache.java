@@ -383,6 +383,8 @@ public class ImageCache {
 			}
 
 			final FileDescriptor fd = ((FileInputStream) inputStream).getFD();
+			// TODO remove
+
 			Log.i("ImageCache", "Disk cache hit for " + key);
 			return decodeSampledBitmapFromDescriptor(fd);
 
