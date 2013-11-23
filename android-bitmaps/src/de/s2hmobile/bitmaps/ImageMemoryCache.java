@@ -31,10 +31,6 @@ class ImageMemoryCache {
 			final int fraction) {
 		mReusableBitmaps = reusableBitmaps;
 		final int cacheSize = getCacheSize(fraction);
-
-		android.util.Log
-				.i("ImageMemoryCache", "cache size kB --- " + cacheSize);
-
 		mMemoryCache = new LruCache<String, BitmapDrawable>(cacheSize) {
 
 			/**

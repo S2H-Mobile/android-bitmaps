@@ -9,7 +9,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
-import android.util.Log;
 import android.widget.ImageView;
 import de.s2hmobile.bitmaps.framework.AsyncTask;
 
@@ -32,7 +31,7 @@ abstract class BitmapWorkerTask extends
 		mImageCache = cache;
 	}
 
-	String getKey() {
+	protected String getKey() {
 		return mKey;
 	}
 
@@ -74,8 +73,6 @@ abstract class BitmapWorkerTask extends
 			try {
 				bitmap = mImageCache.getBitmapFromDiskCache(mKey);
 			} catch (final IOException e) {
-				android.util.Log.e("BitmapWorkerTask",
-						"get from disk throws IOException --- ", e);
 			}
 		}
 
@@ -119,8 +116,6 @@ abstract class BitmapWorkerTask extends
 			try {
 				mImageCache.addToCache(mKey, drawable);
 			} catch (final IOException e) {
-				android.util.Log.e("BitmapWorkerTask",
-						"add to cache throws IOException --- ", e);
 			}
 		}
 		return drawable;
@@ -177,9 +172,6 @@ abstract class BitmapWorkerTask extends
 			final Bitmap inBitmap = cache.getBitmapFromReusableSet(options);
 
 			if (inBitmap != null) {
-				if (BuildConfig.DEBUG) {
-					Log.i("ImageResizer", "Found bitmap to use for inBitmap");
-				}
 				options.inBitmap = inBitmap;
 			}
 		}
@@ -245,11 +237,6 @@ abstract class BitmapWorkerTask extends
 		while (inSampleSize <= ratio) {
 			inSampleSize *= 2;
 		}
-
-		// TODO remove log statement in production
-		android.util.Log.i("BitmapBaseTask", "The scale factor is "
-				+ inSampleSize + ".");
-
 		return inSampleSize;
 	}
 }

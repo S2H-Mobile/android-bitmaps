@@ -42,7 +42,6 @@ import android.os.StatFs;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
-import android.util.Log;
 import de.s2hmobile.bitmaps.ImageCache.DiskCacheParams;
 import de.s2hmobile.bitmaps.framework.DiskLruCache;
 
@@ -383,9 +382,6 @@ public class ImageCache {
 			}
 
 			final FileDescriptor fd = ((FileInputStream) inputStream).getFD();
-			// TODO remove
-
-			Log.i("ImageCache", "Disk cache hit for " + key);
 			return decodeSampledBitmapFromDescriptor(fd);
 
 		} finally {
@@ -548,20 +544,12 @@ public class ImageCache {
 	private static void writeToDisk(final DiskLruCache cache, final String key,
 			final Bitmap bitmap) throws IOException {
 		final String hashKey = hashKeyForDisk(key);
-
-		android.util.Log.i("ImageCache", "Hash for " + key + " is " + hashKey);
-
 		OutputStream out = null;
 		try {
 			final DiskLruCache.Snapshot snapshot = cache.get(hashKey);
 			if (snapshot == null) {
 				final DiskLruCache.Editor editor = cache.edit(hashKey);
 				if (editor != null) {
-
-					// TODO remove
-					android.util.Log.i("ImageCache", "Write " + key
-							+ " to disk cache.");
-
 					out = editor.newOutputStream(DISK_CACHE_INDEX);
 					bitmap.compress(CompressFormat.JPEG, 100, out);
 					editor.commit();

@@ -58,7 +58,6 @@ public class ImageLoader {
 					break;
 				}
 			} catch (final IOException e) {
-				android.util.Log.e("ImageLoader", "disk io --- ", e);
 			}
 			return null;
 		}
@@ -154,7 +153,7 @@ public class ImageLoader {
 			return;
 		}
 
-		// TODO reicht einmal aufrufen
+		// TODO make key a parameter
 		final String key = new StringBuilder().append(resId).append("_")
 				.append(targetWidth).append("_").append(targetHeight)
 				.toString();
@@ -299,10 +298,8 @@ public class ImageLoader {
 	}
 
 	/**
-	 * @param imageView
-	 *            Any imageView
-	 * @return Retrieve the currently active work task (if any) associated with
-	 *         this imageView. null if there is no such task.
+	 * Retrieves the currently active work task (if any) associated with this
+	 * view. Returns null if there is no such task.
 	 */
 	protected static BitmapWorkerTask getBitmapWorkerTask(
 			final ImageView imageView) {

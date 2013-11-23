@@ -86,17 +86,10 @@ public final class ExternalStorageHandler {
 		final File cacheDir = isExternalStorageWritable() ? context
 				.getExternalCacheDir() : context.getCacheDir();
 		if (cacheDir == null) {
-			// TODO remove log statement
-			android.util.Log.i("ExternalStorageHandler",
-					"disk cache dir is null!");
 			return null;
 		}
+
 		final String path = cacheDir.getPath() + File.separator + uniqueName;
-
-		// TODO remove log statement
-		android.util.Log.i("ExternalStorageHandler", "disk cache dir --- "
-				+ path);
-
 		return new File(path);
 	}
 

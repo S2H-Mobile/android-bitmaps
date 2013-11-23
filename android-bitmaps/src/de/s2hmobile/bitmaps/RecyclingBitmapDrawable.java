@@ -84,13 +84,6 @@ public class RecyclingBitmapDrawable extends BitmapDrawable {
 		// has been displayed, then recycle
 		if (mCacheRefCount <= 0 && mDisplayRefCount <= 0 && mHasBeenDisplayed
 				&& hasValidBitmap()) {
-
-			// TODO remove log statement
-			android.util.Log.i(
-					"RecyclingBitmapDrawable",
-					"No longer being used or cached so recycling. "
-							+ this.toString());
-
 			getBitmap().recycle();
 		}
 	}

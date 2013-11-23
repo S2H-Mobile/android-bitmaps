@@ -73,5 +73,4 @@ public class BitmapResourceTask extends BitmapWorkerTask {
 		options.inPurgeable = true;
 		return BitmapFactory.decodeResource(mResources, mResId, options);
 	}
-
 }
