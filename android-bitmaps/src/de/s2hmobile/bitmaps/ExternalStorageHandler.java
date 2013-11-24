@@ -27,19 +27,19 @@ import android.os.Environment;
 public final class ExternalStorageHandler {
 
 	/** Caches the handler for the image file. */
-	// private static File sImageFile = null;
+	private static File sImageFile = null;
 
 	private ExternalStorageHandler() {
 	}
 
-	// public static boolean deleteImageFile(final String fileName) {
-	// try {
-	// return ExternalStorageHandler.getImageFile(fileName).delete();
-	// } catch (final IOException e) {
-	// return false;
-	// }
-	// }
-	//
+	public static boolean deleteImageFile(final String fileName) {
+		try {
+			return ExternalStorageHandler.getImageFile(fileName).delete();
+		} catch (final IOException e) {
+			return false;
+		}
+	}
+
 	// public static File getExternalCacheDir(final Context context)
 	// throws IOException {
 	// if (isExternalStorageWritable()) {
@@ -49,22 +49,21 @@ public final class ExternalStorageHandler {
 	// "Can't create path to external storage directory.");
 	// }
 	// }
-	//
-	// public static File getImageFile(final String fileName) throws IOException
-	// {
-	// if (sImageFile == null) {
-	// if (isExternalStorageWritable()) {
-	// final File path = Environment
-	// .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-	// path.mkdirs();
-	// sImageFile = new File(path, fileName);
-	// } else {
-	// throw new IOException(
-	// "Can't create path to external storage directory.");
-	// }
-	// }
-	// return sImageFile;
-	// }
+
+	public static File getImageFile(final String fileName) throws IOException {
+		if (sImageFile == null) {
+			if (isExternalStorageWritable()) {
+				final File path = Environment
+						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+				path.mkdirs();
+				sImageFile = new File(path, fileName);
+			} else {
+				throw new IOException(
+						"Can't create path to external storage directory.");
+			}
+		}
+		return sImageFile;
+	}
 
 	/**
 	 * Get a usable cache directory (external if available, internal otherwise).
