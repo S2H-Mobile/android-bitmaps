@@ -226,7 +226,6 @@ abstract class BitmapWorkerTask extends
 			 * equal to the requested ones.
 			 */
 			ratio = Math.min(heightRatio, widthRatio);
-
 		}
 
 		/*

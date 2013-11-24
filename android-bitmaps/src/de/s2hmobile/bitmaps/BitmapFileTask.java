@@ -22,25 +22,16 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.widget.ImageView;
 
-public class BitmapResourceTask extends BitmapWorkerTask {
+public final class BitmapFileTask extends BitmapWorkerTask {
 
-	private final int mResId;
+	private final String mPath;
 
-	protected BitmapResourceTask(final ImageView imageView, final String key,
-			final Resources res, final ImageCache cache, final int resId) {
+	protected BitmapFileTask(final ImageView imageView, final String key,
+			final Resources res, final ImageCache cache, final String path) {
 		super(imageView, key, res, cache);
-		mResId = resId;
+		mPath = path;
 	}
 
-	/**
-	 * Decodes a bitmap from a resource image file.
-	 * 
-	 * @param targetWidth
-	 *            - the width of the target bitmap
-	 * @param targetHeight
-	 *            - the height of the target bitmap
-	 * @return The decoded bitmap, scaled to the target dimensions.
-	 */
 	@Override
 	protected Bitmap decodeBitmap(final int targetWidth, final int targetHeight) {
 		final BitmapFactory.Options options = new BitmapFactory.Options();
@@ -50,7 +41,7 @@ public class BitmapResourceTask extends BitmapWorkerTask {
 		 * memory allocation) of the target bitmap.
 		 */
 		options.inJustDecodeBounds = true;
-		BitmapFactory.decodeResource(mResources, mResId, options);
+		BitmapFactory.decodeFile(mPath, options);
 
 		// raw height and width of image
 		final int imageWidth = options.outWidth;
@@ -67,6 +58,6 @@ public class BitmapResourceTask extends BitmapWorkerTask {
 		// decode the image file into a bitmap
 		options.inJustDecodeBounds = false;
 		options.inPurgeable = true;
-		return BitmapFactory.decodeResource(mResources, mResId, options);
+		return BitmapFactory.decodeFile(mPath, options);
 	}
 }

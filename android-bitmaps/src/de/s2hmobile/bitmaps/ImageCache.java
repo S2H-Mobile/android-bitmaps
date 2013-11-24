@@ -34,6 +34,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
@@ -153,9 +154,20 @@ public class ImageCache {
 	private ImageCache(final DiskCacheParams params, final int fraction) {
 		mParams = params;
 
+		/*
+		 * TODO Consider a synchronized set for storing references to bitmaps
+		 * that can be used with the inBitmap option.
+		 * 
+		 * http://developer
+		 * .android.com/training/displaying-bitmaps/manage-memory.html#inBitmap
+		 * 
+		 * mReusableBitmaps = Collections.synchronizedSet(new
+		 * HashSet<SoftReference<Bitmap>>());
+		 */
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			mReusableBitmaps = new HashSet<SoftReference<Bitmap>>();
 		}
+
 		mMemoryCache = new ImageMemoryCache(mReusableBitmaps, fraction);
 	}
 
@@ -445,12 +457,37 @@ public class ImageCache {
 	 * @return true if <code>candidate</code> can be used for inBitmap re-use
 	 *         with <code>targetOptions</code>
 	 */
-	private static boolean canUseForInBitmap(final Bitmap candidate,
-			final BitmapFactory.Options targetOptions) {
-		final int width = targetOptions.outWidth / targetOptions.inSampleSize;
-		final int height = targetOptions.outHeight / targetOptions.inSampleSize;
+	// private static boolean canUseForInBitmap(final Bitmap candidate,
+	// final BitmapFactory.Options targetOptions) {
+	// final int width = targetOptions.outWidth / targetOptions.inSampleSize;
+	// final int height = targetOptions.outHeight / targetOptions.inSampleSize;
+	//
+	// return candidate.getWidth() == width && candidate.getHeight() == height;
+	// }
+	@TargetApi(Build.VERSION_CODES.KITKAT)
+	private static boolean canUseForInBitmap(Bitmap candidate,
+			BitmapFactory.Options targetOptions) {
+		final int outWidth = targetOptions.outWidth;
+		final int outHeight = targetOptions.outHeight;
+		final int inSampleSize = targetOptions.inSampleSize;
 
-		return candidate.getWidth() == width && candidate.getHeight() == height;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+
+			// From Android 4.4 (KitKat) onward we can re-use if the byte size
+			// of the new bitmap is smaller than the reusable bitmap candidate
+			// allocation byte count.
+			final int width = outWidth / inSampleSize;
+			final int height = outHeight / inSampleSize;
+			final int byteCount = width * height
+					* getBytesPerPixel(candidate.getConfig());
+			return byteCount <= candidate.getAllocationByteCount();
+		}
+
+		// On earlier versions, the dimensions must match exactly and the
+		// inSampleSize must be 1
+		// TODO in our implementation, the sample size is never one
+		return candidate.getWidth() == outWidth
+				&& candidate.getHeight() == outHeight && inSampleSize == 1;
 	}
 
 	private static DiskLruCache createDiskCache(final DiskCacheParams params)
@@ -504,6 +541,24 @@ public class ImageCache {
 	}
 
 	/**
+	 * A helper function to return the byte usage per pixel of a bitmap based on
+	 * its configuration.
+	 */
+	private static int getBytesPerPixel(Config config) {
+		if (config == Config.ARGB_8888) {
+			return 4;
+		} else if (config == Config.RGB_565) {
+			return 2;
+		} else if (config == Config.ARGB_4444) {
+			return 2;
+		} else if (config == Config.ALPHA_8) {
+			return 1;
+		} else {
+			return 1;
+		}
+	}
+
+	/**
 	 * Check how much usable space is available at a given path.
 	 * 
 	 * @param path
@@ -535,6 +590,11 @@ public class ImageCache {
 			final MessageDigest md = MessageDigest.getInstance("MD5");
 			md.update(key.getBytes());
 			cacheKey = bytesToHexString(md.digest());
+			// alternative approach
+			// md.update(key.getBytes(), 0, key.length());
+			// final byte[] magnitude = md.digest();
+			// final BigInteger bigInt = new BigInteger(1, magnitude);
+			// final String result = bigInt.toString(16);
 		} catch (final NoSuchAlgorithmException e) {
 			cacheKey = String.valueOf(key.hashCode());
 		}

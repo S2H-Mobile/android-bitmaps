@@ -17,6 +17,7 @@
 
 package de.s2hmobile.bitmaps;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 
@@ -170,6 +171,44 @@ public class ImageLoader {
 
 			final BitmapResourceTask task = new BitmapResourceTask(imageView,
 					key, mResources, mImageCache, resId);
+
+			// set a loading indicator as background
+			final AsyncDrawable placeHolder = new AsyncDrawable(mResources,
+					mLoadingBitmap, task);
+			imageView.setImageDrawable(placeHolder);
+
+			// start the task with parameters
+			final Integer[] params = { targetWidth, targetHeight };
+			task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, params);
+		}
+	}
+
+	public void loadBitmapFromFile(final ImageView imageView, final File file,
+			final int targetWidth, final int targetHeight) {
+		// check for file
+		if (file == null || !file.exists()) {
+			return;
+		}
+		final String path = file.getAbsolutePath();
+
+		// TODO make key a parameter
+		final String key = new StringBuilder().append(path).append("_")
+				.append(targetWidth).append("_").append(targetHeight)
+				.toString();
+
+		final BitmapDrawable drawable = mImageCache == null ? null
+				: mImageCache.getBitmapDrawableFromMemCache(key);
+
+		if (drawable != null) {
+
+			// bitmap found in memory cache
+			imageView.setImageDrawable(drawable);
+
+		} else if (cancelPotentialWork(key, imageView)) {
+
+			// instantiate the task
+			final BitmapFileTask task = new BitmapFileTask(imageView, key,
+					mResources, mImageCache, path);
 
 			// set a loading indicator as background
 			final AsyncDrawable placeHolder = new AsyncDrawable(mResources,
