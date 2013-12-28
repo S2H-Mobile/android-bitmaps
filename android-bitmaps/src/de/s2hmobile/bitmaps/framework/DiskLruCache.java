@@ -898,11 +898,6 @@ public final class DiskLruCache implements Closeable {
 						cache.journalFile, true), IO_BUFFER_SIZE);
 				return cache;
 			} catch (final IOException journalIsCorrupt) {
-
-				// TODO remove log statement
-				android.util.Log.e("DiskLruCache", "removing corrupt journal "
-						+ directory, journalIsCorrupt);
-
 				cache.delete();
 			}
 		}
