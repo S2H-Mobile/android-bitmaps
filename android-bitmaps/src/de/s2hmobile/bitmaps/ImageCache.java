@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import android.annotation.TargetApi;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Bitmap.Config;
@@ -43,7 +42,6 @@ import android.os.StatFs;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
-import de.s2hmobile.bitmaps.ImageCache.DiskCacheParams;
 import de.s2hmobile.bitmaps.framework.DiskLruCache;
 
 /**
@@ -55,44 +53,6 @@ import de.s2hmobile.bitmaps.framework.DiskLruCache;
  * {@link ImageLoader#addImageCache(FragmentManager, DiskCacheParams)}.
  */
 public class ImageCache {
-
-	/**
-	 * A holder class that contains disk cache parameters.
-	 */
-	public static class DiskCacheParams {
-
-		private final File diskCacheDir;
-
-		private final int diskCacheSize;
-
-		/**
-		 * Create a set of image cache parameters that can be provided to
-		 * {@link ImageCache#getInstance(FragmentManager, DiskCacheParams)} or
-		 * {@link ImageLoader#addImageCache(FragmentManager, DiskCacheParams)}.
-		 * 
-		 * @param context
-		 *            A context to use.
-		 * @param dirName
-		 *            A unique subdirectory name that will be appended to the
-		 *            application cache directory. Usually "cache" or "images"
-		 *            is sufficient.
-		 */
-		public DiskCacheParams(final Context context, final String dirName,
-				final int size) throws IOException {
-			diskCacheDir = ExternalStorageHandler.getDiskCacheDir(context,
-					dirName);
-			diskCacheSize = size;
-		}
-
-		public File getDiskCacheDir() {
-			return diskCacheDir;
-		}
-
-		public int getDiskCacheSize() {
-			return diskCacheSize;
-		}
-
-	}
 
 	/**
 	 * A simple non-UI fragment that stores a single object and is retained over

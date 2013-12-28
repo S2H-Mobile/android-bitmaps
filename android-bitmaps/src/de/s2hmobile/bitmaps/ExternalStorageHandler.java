@@ -40,29 +40,25 @@ public final class ExternalStorageHandler {
 		}
 	}
 
-	// public static File getExternalCacheDir(final Context context)
-	// throws IOException {
-	// if (isExternalStorageWritable()) {
-	// return context.getExternalCacheDir();
-	// } else {
-	// throw new IOException(
-	// "Can't create path to external storage directory.");
-	// }
-	// }
-
 	public static File getImageFile(final String fileName) throws IOException {
 		if (sImageFile == null) {
-			if (isExternalStorageWritable()) {
-				final File path = Environment
-						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-				path.mkdirs();
-				sImageFile = new File(path, fileName);
-			} else {
-				throw new IOException(
-						"Can't create path to external storage directory.");
-			}
+			sImageFile = createImageFile(fileName);
 		}
+
 		return sImageFile;
+	}
+
+	private static File createImageFile(final String fileName)
+			throws IOException {
+		if (!isExternalStorageWritable()) {
+			throw new IOException(
+					"Can't create path to external storage directory.");
+		}
+
+		final File path = Environment
+				.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+		path.mkdirs();
+		return new File(path, fileName);
 	}
 
 	/**

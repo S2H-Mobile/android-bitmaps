@@ -28,7 +28,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.v4.app.FragmentManager;
 import android.widget.ImageView;
-import de.s2hmobile.bitmaps.ImageCache.DiskCacheParams;
 import de.s2hmobile.bitmaps.framework.AsyncTask;
 
 /**
