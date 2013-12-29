@@ -31,24 +31,11 @@ abstract class BitmapWorkerTask extends
 		mImageCache = cache;
 	}
 
-	protected String getKey() {
-		return mKey;
-	}
-
 	protected abstract Bitmap decodeBitmap(final int targetWidth,
 			final int targetHeight);
 
-	// @Override
-	// protected void onCancelled(final BitmapDrawable value) {
-	// super.onCancelled(value);
-	// synchronized (mPauseWorkLock) {
-	// mPauseWorkLock.notifyAll();
-	// }
-	// }
-
 	@Override
 	protected BitmapDrawable doInBackground(final Integer... params) {
-
 		// wait here if work is paused and the task is not cancelled
 		// synchronized (mPauseWorkLock) {
 		// while (mPauseWork && !isCancelled()) {
@@ -121,26 +108,41 @@ abstract class BitmapWorkerTask extends
 		return drawable;
 	}
 
+	// @Override
+	// protected void onCancelled(final BitmapDrawable value) {
+	// super.onCancelled(value);
+	// synchronized (mPauseWorkLock) {
+	// mPauseWorkLock.notifyAll();
+	// }
+	// }
+
+	protected String getKey() {
+		return mKey;
+	}
+
 	/**
-	 * Once the image is processed, associates it to the imageView
+	 * Once the image is processed, set it as the image view drawable. If cancel
+	 * was called on this task or the "exit early" flag is set then we're done.
+	 * 
+	 * <p>
+	 * <code>if (isCancelled() || mExitTasksEarly) </code>
 	 */
 	@Override
-	protected void onPostExecute(BitmapDrawable result) {
-
-		/*
-		 * If cancel was called on this task or the "exit early" flag is set
-		 * then we're done. if (isCancelled() || mExitTasksEarly) {
-		 */
+	protected void onPostExecute(final BitmapDrawable result) {
 		if (isCancelled()) {
-			result = null;
+			return;
 		}
 
-		if (result != null) {
-			final ImageView imageView = getAttachedImageView();
-			if (imageView != null) {
-				imageView.setImageDrawable(result);
-			}
+		if (result == null) {
+			return;
 		}
+
+		final ImageView imageView = getAttachedImageView();
+		if (imageView == null) {
+			return;
+		}
+
+		imageView.setImageDrawable(result);
 	}
 
 	/**
