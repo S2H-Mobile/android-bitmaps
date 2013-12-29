@@ -99,13 +99,20 @@ abstract class BitmapWorkerTask extends
 				bitmap);
 
 		// add the drawable to the cache
-		if (mImageCache != null) {
-			try {
-				mImageCache.addToCache(mKey, drawable);
-			} catch (final IOException e) {
-			}
-		}
+		addToCache(drawable);
+
 		return drawable;
+	}
+
+	private void addToCache(final BitmapDrawable drawable) {
+		if (mImageCache == null) {
+			return;
+		}
+
+		try {
+			mImageCache.addToCache(mKey, drawable);
+		} catch (final IOException e) {
+		}
 	}
 
 	// @Override
@@ -164,19 +171,23 @@ abstract class BitmapWorkerTask extends
 	protected static void addInBitmapOptions(
 			final BitmapFactory.Options options, final ImageCache cache) {
 
-		// inBitmap only works with mutable bitmaps so force the decoder to
-		// return mutable bitmaps.
+		/*
+		 * This works with mutable bitmaps so force the decoder to return
+		 * mutable bitmaps.
+		 */
 		options.inMutable = true;
 
-		if (cache != null) {
-
-			// Try and find a bitmap to use for inBitmap
-			final Bitmap inBitmap = cache.getBitmapFromReusableSet(options);
-
-			if (inBitmap != null) {
-				options.inBitmap = inBitmap;
-			}
+		if (cache == null) {
+			return;
 		}
+
+		// Try and find a bitmap to use for inBitmap
+		final Bitmap bitmap = cache.getBitmapFromReusableSet(options);
+		if (bitmap == null) {
+			return;
+		}
+
+		options.inBitmap = bitmap;
 	}
 
 	/**
