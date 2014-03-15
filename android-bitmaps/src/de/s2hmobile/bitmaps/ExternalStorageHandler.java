@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 - 2013, S2H Mobile
+ * Copyright (C) 2012 - 2014, S2H Mobile
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,19 +48,6 @@ public final class ExternalStorageHandler {
 		return sImageFile;
 	}
 
-	private static File createImageFile(final String fileName)
-			throws IOException {
-		if (!isExternalStorageWritable()) {
-			throw new IOException(
-					"Can't create path to external storage directory.");
-		}
-
-		final File path = Environment
-				.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-		path.mkdirs();
-		return new File(path, fileName);
-	}
-
 	/**
 	 * Get a usable cache directory (external if available, internal otherwise).
 	 * Returns {@code null} if an I/O exception occurs.
@@ -88,6 +75,18 @@ public final class ExternalStorageHandler {
 		return new File(path);
 	}
 
+	private static File createImageFile(final String fileName)
+			throws IOException {
+		if (!isExternalStorageWritable()) {
+			return null;
+		}
+
+		final File path = Environment
+				.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+		path.mkdirs();
+		return new File(path, fileName);
+	}
+
 	/**
 	 * Check if external storage is built-in or removable.
 	 * 
@@ -101,10 +100,7 @@ public final class ExternalStorageHandler {
 	}
 
 	private static boolean isExternalStorageWritable() {
-		final String currentState = Environment.getExternalStorageState();
-
-		// is writable if mounted and not removable
-		return Environment.MEDIA_MOUNTED.equals(currentState)
-				&& !isExternalStorageRemovable();
+		final String state = Environment.getExternalStorageState();
+		return Environment.MEDIA_MOUNTED.equals(state);
 	}
 }
