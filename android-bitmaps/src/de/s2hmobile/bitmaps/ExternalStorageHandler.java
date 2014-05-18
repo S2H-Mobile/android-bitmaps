@@ -32,9 +32,18 @@ public final class ExternalStorageHandler {
 	private ExternalStorageHandler() {
 	}
 
+	/**
+	 * Delete image file.
+	 * 
+	 * @since v1.1.1
+	 * 
+	 * @param fileName
+	 * @return True if file was deleted successfully.
+	 */
 	public static boolean deleteImageFile(final String fileName) {
 		try {
-			return ExternalStorageHandler.getImageFile(fileName).delete();
+			final File image = ExternalStorageHandler.getImageFile(fileName);
+			return image != null ? image.delete() : false;
 		} catch (final IOException e) {
 			return false;
 		}
