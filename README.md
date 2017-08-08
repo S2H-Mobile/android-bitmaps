@@ -27,9 +27,9 @@ import de.s2hmobile.bitmaps.ImageLoader;
 
 public class MainActivity extends Activity {
 	
-	ImageLoader mImageLoader;
+    ImageLoader mImageLoader;
 	
-	ImageView mImageView;
+    ImageView mImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +40,7 @@ public class MainActivity extends Activity {
 
         mImageLoader = new ImageLoader(getResources());
 
-		// load drawable into image view, at size 200 x 200
+	// load drawable into image view, at size 200 x 200
         mImageLoader.loadImageFromResource(mImageView, R.drawable.ic_launcher, 200, 200);
     }
 }
